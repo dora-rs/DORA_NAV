@@ -2,10 +2,12 @@ nodes:
   # Keyboard input node (optional - for testing)
   - id: keyboard
     custom:
-      source: ../adora_chassis_control_dora_node/get_keyboard_value2.py
+      source: ./get_keyboard_value2.py
+      #command: python3 ./get_keyboard_value2.py  # 运行脚本的命令
       inputs:
         tick:
           source: dora/timer/millis/100
+          #queue_size: 1000
       outputs:
         - CmdVelTwist
 
@@ -16,8 +18,6 @@ nodes:
       inputs:
         CmdVelTwist:
           source: keyboard/CmdVelTwist
-        tick:
-          source: dora/timer/millis/10  # 100 Hz = 10ms period
       outputs:
         - Odometry
         - SystemState
