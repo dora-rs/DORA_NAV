@@ -12,8 +12,11 @@ services:
       - QT_X11_NO_MITSHM=1
 
     # Mount the X11 socket so the container can draw to your screen
+    # Mount X11 socket + individual dataflow YAMLs (NOT the whole dir — that would hide built binaries)
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./dataflow_full_sim.yml:/root/Public/dora-nav/dataflow_full_sim.yml:ro
+      - ./dataflow_local_avoidance.yml:/root/Public/dora-nav/dataflow_local_avoidance.yml:ro
 
     # Use host networking — simplest for DORA daemon communication
     network_mode: host
