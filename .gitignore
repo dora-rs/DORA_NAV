@@ -4,3 +4,9 @@
 build/
 out/
 CLAUDE.md
+# Large data files - not tracked in git
+data/*.pcd
+*.pcd
+*.bag
+build/
+*/build/
