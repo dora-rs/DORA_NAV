@@ -241,19 +241,24 @@ void MujocoSimBridge::processControlInput(const char* data, size_t len) {
     if (len >= 3 * sizeof(float)) {
         const float* cmd = reinterpret_cast<const float*>(data);
         float linear_x = cmd[0];
-        float linear_y = cmd[1];
-        float angular_z = cmd[2];
+        float linear_z = cmd[2];  // angular velocity
 
-        // Apply to actuators (assuming differential drive)
-        // This depends on your robot model's actuator configuration
-        if (model_->nu >= 2) {
-            // Simple differential drive: left and right wheel velocities
-            float wheel_base = 0.5f;  // meters, adjust for your robot
-            float left_vel = linear_x - angular_z * wheel_base / 2.0f;
-            float right_vel = linear_x + angular_z * wheel_base / 2.0f;
+        // Lookup specific actuators by name!
+        int left_act = mj_name2id(model_, mjOBJ_ACTUATOR, "left_motor");
+        int right_act = mj_name2id(model_, mjOBJ_ACTUATOR, "right_motor");
 
-            data_->ctrl[0] = left_vel;
-            data_->ctrl[1] = right_vel;
+        if (left_act >= 0 && right_act >= 0) {
+            float wheel_base = 0.5f;  // meters
+            float left_vel = linear_x - linear_z * wheel_base / 2.0f;
+            float right_vel = linear_x + linear_z * wheel_base / 2.0f;
+
+            data_->ctrl[left_act] = left_vel;
+            data_->ctrl[right_act] = right_vel;
+            
+            // Helpful debug log so we know it actually applied the velocity to MuJoCo
+            printf("[MujocoSimBridge] Applied twist -> left: %.2f, right: %.2f\n", left_vel, right_vel);
+        } else {
+            printf("[MujocoSimBridge] ERROR: Could not find left_motor/right_motor actuators\n");
         }
     }
 }
