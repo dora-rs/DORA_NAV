@@ -370,7 +370,9 @@ int main()
     void* dora_context = init_dora_context_from_env();
 
     rerun::RecordingStream rec("lidarpoints_viewer");
-    rec.spawn().exit_on_failure();
+    // Connect to a Rerun viewer running on the host (docker-compose uses host networking).
+    // Start the viewer on the host first: `rerun`
+    rec.connect_grpc("rerun+http://127.0.0.1:9876/proxy").exit_on_failure();
 
     std::string globalmap_pcd ="./data/map.pcd";
     auto map_load = read_map(globalmap_pcd, rec);

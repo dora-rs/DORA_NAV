@@ -1,0 +1,23 @@
+services:
+  dora-nav:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dora-nav:latest
+    container_name: dora_nav_sim
+
+    # Pass your display so the Rerun viewer window opens on your screen
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+
+    # Mount the X11 socket so the container can draw to your screen
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+    # Use host networking — simplest for DORA daemon communication
+    network_mode: host
+
+    # Keep terminal interactive so you can see logs and Ctrl+C to stop
+    stdin_open: true
+    tty: true
