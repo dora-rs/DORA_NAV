@@ -1,0 +1,13 @@
+nodes:
+  - id: rosbag_reader
+    path: dora_rosbag_node.py
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - imu_data
+      - gps_data
+      - odom_data
+    env:
+      BAG_PATH: test_bag/
+      SPEED: "1.0"
+      LOOP: "false"
