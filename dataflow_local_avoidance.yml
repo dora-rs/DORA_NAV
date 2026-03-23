@@ -1,0 +1,111 @@
+# Local Obstacle Avoidance Pipeline
+# Uses DWA local planner instead of direct lat/lon controllers
+# Usage: dora up && dora start /root/Public/dora-nav/dataflow_local_avoidance.yml --attach
+
+nodes:
+  # Mujoco simulation — provides LiDAR, IMU, ground truth pose
+  # Now also accepts twist_cmd from local_planner
+  - id: mujoco_sim
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/simulation/mujoco_bridge/build/mujoco_sim_bridge
+      inputs:
+        tick: dora/timer/millis/10
+        twist_cmd: local_planner/twist_cmd   # ← from our DWA planner
+      outputs:
+        - pointcloud
+        - imu_msg
+        - ground_truth_pose
+    env:
+      MUJOCO_MODEL_PATH: /root/Public/dora-nav/simulation/mujoco_bridge/models/robot_warehouse.xml
+      SIM_TIMESTEP: "0.001"
+      REAL_TIME_FACTOR: "1.0"
+      LIDAR_RAYS: "1080"
+      LIDAR_VERTICAL_BEAMS: "16"
+      LIDAR_RANGE: "20.0"
+      LIDAR_MIN_RANGE: "0.3"
+      POINTCLOUD_RATE: "10"
+      IMU_RATE: "20"
+      IMU_ADD_NOISE: "1"
+
+  # Road publisher (still needed for global planner context)
+  - id: pub_road
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/map/pub_road/build/pubroad
+      inputs:
+        tick: dora/timer/millis/200
+      outputs:
+        - road_lane
+
+  # Task publisher — provides mission goal/speed
+  - id: task_pub_node
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/planning/mission_planning/task_pub/build/task_pub_node
+      inputs:
+        tick: dora/timer/millis/20
+      outputs:
+        - road_attri_msg
+
+  # Road lane publisher
+  - id: road_lane_publisher_node
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/map/road_line_publisher/build/road_lane_publisher_node
+      inputs:
+        road_lane: pub_road/road_lane
+        cur_pose: mujoco_sim/ground_truth_pose
+      outputs:
+        - cur_pose_all
+
+  # Global planner — produces the reference path
+  - id: planning
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/planning/routing_planning/build/routing_planning_node
+      inputs:
+        road_lane: pub_road/road_lane
+        cur_pose_all: road_lane_publisher_node/cur_pose_all
+        road_attri_msg: task_pub_node/road_attri_msg
+      outputs:
+        - raw_path
+        - Request
+
+  # ── LOCAL PLANNER (new node) ──────────────────────────────────────────────
+  # Reads LiDAR + pose + global path → outputs twist_cmd to mujoco_sim
+  - id: local_planner
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/planning/local_planner/build/local_planner_node
+      inputs:
+        tick: dora/timer/millis/100        # 10 Hz control loop
+        pointcloud: mujoco_sim/pointcloud  # live LiDAR scan
+        cur_pose: mujoco_sim/ground_truth_pose
+        local_goal: planning/raw_path      # reference path from global planner
+      outputs:
+        - twist_cmd
+    env:
+      DWA_MAX_V: "0.5"
+      DWA_MIN_V: "0.0"
+      DWA_MAX_W: "1.0"
+      DWA_MAX_ACCEL_V: "0.3"
+      DWA_MAX_ACCEL_W: "0.6"
+      DWA_PREDICT_TIME: "1.5"
+      DWA_DT: "0.1"
+      DWA_ALPHA: "0.15"
+      DWA_BETA: "1.0"
+      DWA_GAMMA: "0.1"
+      DWA_ROBOT_RADIUS: "0.3"
+      DWA_SAFETY_MARGIN: "0.05"
+      DWA_GOAL_TOL: "0.5"
+
+  # Visualization — unchanged
+  - id: rerun
+    custom:
+      source: Local
+      path: /root/Public/dora-nav/rerun/build/to_rerun
+      inputs:
+        pointcloud: mujoco_sim/pointcloud
+        raw_path: planning/raw_path
+        cur_pose: mujoco_sim/ground_truth_pose

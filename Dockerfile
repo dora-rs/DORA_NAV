@@ -88,6 +88,11 @@ RUN cd control/vehicle_control/lat_controller && mkdir -p build && cd build && \
     -DDORA_LIB_PATH=$DORA_LIB -DDORA_NAV_ROOT=$NAV_ROOT && \
     make -j$(nproc)
 
+RUN cd planning/local_planner && mkdir -p build && cd build && \
+    cmake .. -DDORA_INCLUDE_DIR=$DORA_INCLUDE -DDORA_OPERATOR_DIR=$DORA_OPERATOR \
+    -DDORA_LIB_PATH=$DORA_LIB -DDORA_NAV_ROOT=$NAV_ROOT && \
+    make -j$(nproc)
+
 # ── Build ndt_omp static library (no ROS, so we compile sources directly) ──────
 RUN NDT_DIR=/root/Public/dora-nav/localization/dora-hdl_localization/3rdparty/hdl_ndt_omp && \
     PCL_INCLUDES=$(pkg-config --cflags-only-I eigen3 2>/dev/null || true) && \

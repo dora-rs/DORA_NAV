@@ -120,13 +120,15 @@ int main()
                                              local_goal,
                                              obstacle_map.obstacles());
 
-                // Publish cmd_vel
-                const char* out_id = "cmd_vel";
+                // Publish as twist_cmd: [linear_x, linear_y, angular_z]
+                // mujoco_sim already has a handler for this format
+                float twist[3] = {cmd.linear_v, 0.0f, cmd.angular_w};
+                const char* out_id = "twist_cmd";
                 dora_send_output(dora_context,
                                  const_cast<char*>(out_id), strlen(out_id),
-                                 reinterpret_cast<char*>(&cmd), sizeof(cmd));
+                                 reinterpret_cast<char*>(twist), sizeof(twist));
 
-                printf("[local_planner] cmd_vel: v=%.3f w=%.3f | obstacles=%zu\n",
+                printf("[local_planner] twist_cmd: v=%.3f w=%.3f | obstacles=%zu\n",
                        cmd.linear_v, cmd.angular_w, obstacle_map.obstacles().size());
             }
 
