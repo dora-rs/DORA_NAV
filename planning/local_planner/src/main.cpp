@@ -111,14 +111,19 @@ int main()
 
             // ── Timer tick → compute and publish cmd_vel ──────────────────
             else if (strncmp(input_id, "tick", 4) == 0) {
-                if (!has_pose || !has_path) {
-                    free_dora_event(event);
-                    continue;
-                }
+                CmdVel cmd = {0.0f, 0.0f};
 
-                CmdVel cmd = planner.compute(robot_state,
-                                             local_goal,
-                                             obstacle_map.obstacles());
+                if (!has_pose || !has_path) {
+                    // DEBUG: If missing inputs, force a slow forward crawl to test actuation
+                    printf("[local_planner] Waiting for inputs (pose:%d path:%d). Forcing v=0.2\n", has_pose, has_path);
+                    cmd.linear_v = 0.2f;
+                    cmd.angular_w = 0.0f;
+                } else {
+                    // Normal DWA operation
+                    cmd = planner.compute(robot_state,
+                                                 local_goal,
+                                                 obstacle_map.obstacles());
+                }
 
                 // Publish as twist_cmd: [linear_x, linear_y, angular_z]
                 // mujoco_sim already has a handler for this format
