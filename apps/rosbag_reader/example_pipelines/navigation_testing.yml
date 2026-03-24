@@ -1,0 +1,31 @@
+# Pipeline 3: Navigation Testing
+# Author: kaushikteja26
+# GSoC 2026 Project #9
+# Feeds GPS + Odometry into navigation stack
+# Usage: dora start example_pipelines/navigation_testing.yml
+
+nodes:
+  - id: rosbag_reader
+    path: apps/rosbag_reader/dora_rosbag_node.py
+    outputs:
+      - gps_data
+      - odom_data
+    env:
+      BAG_PATH: apps/rosbag_reader/test_bag/
+      SPEED: "0.5"
+      LOOP: "false"
+
+  - id: nav_node
+    path: apps/rosbag_reader/nav_stub_node.py
+    inputs:
+      gps:  rosbag_reader/gps_data
+      odom: rosbag_reader/odom_data
+    outputs:
+      - planned_path
+      - current_position
+
+  - id: printer
+    path: apps/rosbag_reader/printer_node.py
+    inputs:
+      position: nav_node/current_position
+      path:     nav_node/planned_path

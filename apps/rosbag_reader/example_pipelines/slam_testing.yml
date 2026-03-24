@@ -1,0 +1,30 @@
+# Pipeline 2: SLAM Testing
+# Author: kaushikteja26
+# GSoC 2026 Project #9
+# Feeds LiDAR + IMU into SLAM algorithm
+# Usage: dora start example_pipelines/slam_testing.yml
+
+nodes:
+  - id: rosbag_reader
+    path: apps/rosbag_reader/dora_rosbag_node.py
+    outputs:
+      - imu_data
+      - pointcloud_data
+    env:
+      BAG_PATH: apps/rosbag_reader/test_bag/
+      SPEED: "1.0"
+      LOOP: "true"
+
+  - id: slam_node
+    path: apps/rosbag_reader/slam_stub_node.py
+    inputs:
+      pointcloud: rosbag_reader/pointcloud_data
+      imu:        rosbag_reader/imu_data
+    outputs:
+      - slam_pose
+      - slam_map
+
+  - id: printer
+    path: apps/rosbag_reader/printer_node.py
+    inputs:
+      slam_pose: slam_node/slam_pose
