@@ -249,8 +249,9 @@ void MujocoSimBridge::processControlInput(const char* data, size_t len) {
 
         if (left_act >= 0 && right_act >= 0) {
             float wheel_base = 0.5f;  // meters
-            float left_vel = linear_x - linear_z * wheel_base / 2.0f;
-            float right_vel = linear_x + linear_z * wheel_base / 2.0f;
+            float wheel_radius = 0.1f; // meters
+            float left_vel = (linear_x - linear_z * wheel_base / 2.0f) / wheel_radius;
+            float right_vel = (linear_x + linear_z * wheel_base / 2.0f) / wheel_radius;
 
             data_->ctrl[left_act] = left_vel;
             data_->ctrl[right_act] = right_vel;

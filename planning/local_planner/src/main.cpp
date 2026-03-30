@@ -16,26 +16,43 @@ extern "C" {
 /// raw_path is a float array: first half = x coords, second half = y coords.
 /// We take the look-ahead index (e.g. 5th point) as the local goal.
 static Goal extract_local_goal(const char* data, size_t data_len,
-                                float robot_x, float robot_y,
-                                float lookahead_dist = 3.0f)
+                                float lookahead_dist = 2.0f)
 {
     int num_floats  = static_cast<int>(data_len / sizeof(float));
     int num_points  = num_floats / 2;
     const float* xs = reinterpret_cast<const float*>(data);
     const float* ys = xs + num_points;
 
-    if (num_points <= 0) return {robot_x + 1.0f, robot_y};  // fallback
+    if (num_points <= 0) return {1.0f, 0.0f};  // fallback
 
-    // Walk along path points and pick first one beyond lookahead_dist
+    static int print_cnt = 0;
+    if (print_cnt++ % 10 == 0) {
+        printf("[DEBUG] extract_local_goal: num_points=%d. First=(%.2f, %.2f) Last=(%.2f, %.2f)\n", 
+               num_points, xs[0], ys[0], xs[num_points-1], ys[num_points-1]);
+    }
+
+    // 1. Find the closest point on the local path to the origin (robot is at 0,0 locally)
+    int closest_idx = 0;
+    float min_dist2 = std::numeric_limits<float>::max();
     for (int i = 0; i < num_points; ++i) {
-        float dx = xs[i] - robot_x;
-        float dy = ys[i] - robot_y;
-        if (std::sqrt(dx * dx + dy * dy) >= lookahead_dist) {
-            return {xs[i], ys[i]};
+        float dist2 = xs[i]*xs[i] + ys[i]*ys[i];
+        if (dist2 < min_dist2) {
+            min_dist2 = dist2;
+            closest_idx = i;
         }
     }
-    // Default: last point in path
-    return {xs[num_points - 1], ys[num_points - 1]};
+
+    // 2. Walk FORWARD along the path to find the lookahead goal
+    for (int i = closest_idx; i < num_points; ++i) {
+        if (std::sqrt(xs[i]*xs[i] + ys[i]*ys[i]) >= lookahead_dist) {
+            // Routing frame has Y as forward, X as right.
+            // DWA frame needs X as forward, Y as left.
+            return { ys[i], -xs[i] };
+        }
+    }
+    
+    // Default: last point in path if we are reaching the end
+    return { ys[num_points - 1], -xs[num_points - 1] };
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -103,8 +120,7 @@ int main()
             // ── Global path → local goal ──────────────────────────────────
             else if (strncmp(input_id, "local_goal", 10) == 0) {
                 if (data_len > 0 && has_pose) {
-                    local_goal = extract_local_goal(data, data_len,
-                                                    robot_state.x, robot_state.y);
+                    local_goal = extract_local_goal(data, data_len, planner.config().predict_time * planner.config().max_v + 1.0f);
                     has_path = true;
                 }
             }
@@ -124,6 +140,18 @@ int main()
                                                  local_goal,
                                                  obstacle_map.obstacles());
                 }
+
+                // Debug print the goal tracking
+                static int tick_cnt = 0;
+                if (++tick_cnt % 10 == 0) {
+                    printf("[local_planner] Local goal is (%.2f, %.2f) mapped from path. Tracking active.\n",
+                           local_goal.x, local_goal.y);
+                }
+
+                // Save commanded velocities as the current robot state for the NEXT tick
+                // This allows the DWA dynamic window to accelerate over time.
+                robot_state.v = cmd.linear_v;
+                robot_state.w = cmd.angular_w;
 
                 // Publish as twist_cmd: [linear_x, linear_y, angular_z]
                 // mujoco_sim already has a handler for this format

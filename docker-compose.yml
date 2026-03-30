@@ -24,3 +24,6 @@ services:
     # Keep terminal interactive so you can see logs and Ctrl+C to stop
     stdin_open: true
     tty: true
+
+    # Override the Dockerfile default to run our new local avoidance pipeline
+    command: bash -c "dora up && dora start /root/Public/dora-nav/dataflow_local_avoidance.yml --attach"

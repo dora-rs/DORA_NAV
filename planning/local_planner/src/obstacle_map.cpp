@@ -1,6 +1,7 @@
 #include "obstacle_map.hpp"
 #include <cmath>
 #include <cstring>
+#include <cstdio>
 
 void ObstacleMap::update(const char* data, int32_t size,
                          float max_range, float max_height)
@@ -20,7 +21,8 @@ void ObstacleMap::update(const char* data, int32_t size,
         // Filter: ignore ground and ceiling, ignore far points
         if (z > max_height || z < -0.1f) continue;
         float dist = std::sqrt(x * x + y * y);
-        if (dist > max_range || dist < 0.1f) continue;
+        // Ignore points closer than 0.45m (the robot's own chassis/wheels)
+        if (dist > max_range || dist < 0.45f) continue;
 
         obstacles_.push_back({x, y});
     }

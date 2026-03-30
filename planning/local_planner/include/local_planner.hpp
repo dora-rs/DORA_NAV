@@ -34,8 +34,8 @@ struct DWAConfig {
     float max_accel_w  = 0.6f;   // rad/s²
 
     // Sampling resolution
-    float v_resolution = 0.05f;  // m/s per sample
-    float w_resolution = 0.1f;   // rad/s per sample
+    float v_resolution = 0.01f;  // m/s per sample
+    float w_resolution = 0.02f;   // rad/s per sample
 
     // Trajectory simulation
     float dt            = 0.1f;  // seconds per step

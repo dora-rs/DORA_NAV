@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <cstdio>
 
 LocalPlanner::LocalPlanner(const DWAConfig& config) : config_(config) {}
 
@@ -27,11 +28,9 @@ void LocalPlanner::load_config_from_env()
     config_.goal_tolerance= getf("DWA_GOAL_TOL",    config_.goal_tolerance);
 }
 
-bool LocalPlanner::goal_reached(const RobotState& state, const Goal& goal) const
+bool LocalPlanner::goal_reached(const RobotState& state, const Goal& local_goal) const
 {
-    float dx = goal.x - state.x;
-    float dy = goal.y - state.y;
-    return std::sqrt(dx * dx + dy * dy) < config_.goal_tolerance;
+    return std::sqrt(local_goal.x * local_goal.x + local_goal.y * local_goal.y) < config_.goal_tolerance;
 }
 
 CmdVel LocalPlanner::compute(const RobotState& state,
@@ -39,8 +38,19 @@ CmdVel LocalPlanner::compute(const RobotState& state,
                               const std::vector<Obstacle>& obstacles)
 {
     if (goal_reached(state, goal)) {
+        static int print_count = 0;
+        if (print_count++ % 10 == 0) {
+            printf("[DWA] GOAL REACHED! Goal distance is %.2f (tol: %.2f)\n",
+                   std::sqrt(goal.x*goal.x + goal.y*goal.y), config_.goal_tolerance);
+        }
         return {0.0f, 0.0f};
     }
+
+    // Goal is ALREADY in the robot's local frame (from routing_planning)
+    Goal local_goal = goal;
+
+    // Initial state in local frame is origin, facing 0, with current v and w
+    RobotState local_state = {0.0f, 0.0f, 0.0f, state.v, state.w};
 
     // Dynamic window: velocity window constrained by acceleration limits
     float v_min = std::max(config_.min_v, state.v - config_.max_accel_v * config_.dt);
@@ -54,12 +64,25 @@ CmdVel LocalPlanner::compute(const RobotState& state,
 
     for (float v = v_min; v <= v_max + 1e-6f; v += config_.v_resolution) {
         for (float w = w_min; w <= w_max + 1e-6f; w += config_.w_resolution) {
-            float score = score_trajectory(v, w, state, goal, obstacles);
+            float score = score_trajectory(v, w, local_state, local_goal, obstacles);
             if (score > best_score) {
                 best_score = score;
                 best_cmd   = {v, w};
                 found      = true;
             }
+        }
+    }
+
+    if (!found || best_cmd.linear_v < 0.01f) {
+        // Recovery Mode: if DWA is stuck or commanding near zero velocity, check clearance
+        float min_dist = min_obstacle_dist(0.0f, 0.0f, obstacles);
+        if (min_dist < config_.robot_radius + 0.5f) { // dangerously close to something
+            printf("[DWA] RECOVERY: Dist to obstacle (%.2f) critically low. Reversing!\n", min_dist);
+            return {-0.15f, 0.0f}; // back up slowly straight
+        } else {
+            // It's stuck but NOT critically close to a wall! Log why.
+            printf("[DWA] STUCK: v=0, but min_dist=%.2f. best_score=%.2f LocalGoal(%.2f, %.2f) Found=%d\n", 
+                   min_dist, best_score, local_goal.x, local_goal.y, found);
         }
     }
 
