@@ -17,33 +17,40 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 message(STATUS "Current dir stored in variable: ${CURRENT_DIR}")
-find_package(PCL REQUIRED)
-find_package(Eigen3 QUIET)
+#find_package(PCL REQUIRED)
+#find_package(Eigen3 QUIET)
 find_package(PkgConfig)
 
 
 
-pkg_check_modules(YAMLCPP REQUIRED yaml-cpp>=0.5)
+#pkg_check_modules(YAMLCPP REQUIRED yaml-cpp>=0.5)
 
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
-  # Possibly map additional variables to the EIGEN3_ prefix.
-else()
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+# if(NOT EIGEN3_FOUND)
+#   # Fallback to cmake_modules
+#   find_package(cmake_modules REQUIRED)
+#   find_package(Eigen REQUIRED)
+#   set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
+#   set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
+#   # Possibly map additional variables to the EIGEN3_ prefix.
+# else()
+#   set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+# endif()
+
+# message(${EIGEN_INCLUDE_DIRS})
+
+if(NOT DORA_INCLUDE_DIR)
+  set(DORA_INCLUDE_DIR $ENV{HOME}/dora/apis/c/node; $ENV{HOME}/dora/apis/c/operator)
+endif()
+if(NOT DORA_NODE_API_LIB)
+  set(DORA_NODE_API_LIB $ENV{HOME}/dora/target/release/libdora_node_api_c.a)
 endif()
 
-message(${EIGEN_INCLUDE_DIRS})
 
 include_directories(
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
-  $ENV{HOME}/dora_project/dddddd/dora-0.3.8/apis/c/node #dora的头文件路径 node_api.h
-  $ENV{HOME}/dora_project/dddddd/dora-0.3.8/apis/c/operator
+  ${DORA_INCLUDE_DIR}
   ${CURRENT_DIR}/rs_driver/src #雷达的头文件路径
   # $ENV{HOME}/dora_project/dora/examples/c++-ros2-dataflow/build/ #C++ros的头文件路径
   
@@ -55,56 +62,11 @@ target_link_libraries(rslidar_driver
   ${EIGEN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
   # glog::glog
-  $ENV{HOME}/dora_project/dddddd/dora-0.3.8/target/aarch64-unknown-linux-gnu/release/libdora_node_api_c.a
+  ${DORA_NODE_API_LIB}
   m
   rt
   dl 
   pthread
   pcap
 )
-
-
-add_executable(rslidar_driver_pcap rslidar_driver_pcap.cc )
-target_link_libraries(rslidar_driver_pcap
-  ${PCL_LIBRARIES}
-  ${EIGEN_LIBRARIES}
-  ${YAMLCPP_LIBRARIES}
-  # glog::glog
-  $ENV{HOME}/dora_project/dddddd/dora-0.3.8/target/aarch64-unknown-linux-gnu/release/libdora_node_api_c.a
-  m
-  rt
-  dl 
-  pthread
-  pcap
-)
-
-
-# add_executable(rslidar_driver_pcap rslidar_driver_pcap.cc )
-# target_link_libraries(rslidar_driver_pcap
-#   ${PCL_LIBRARIES}
-#   ${EIGEN_LIBRARIES}
-#   ${YAMLCPP_LIBRARIES}
-#   # glog::glog
-#   $ENV{HOME}/dora_project/dora/target/release/libdora_node_api_c.a
-#   m
-#   rt
-#   dl 
-#   pthread
-#   pcap
-# )
-
-# add_executable(rslidar_driver_ros rslidar_driver_ros.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-ros2-bindings.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-node-api.cc)
-# target_link_libraries(rslidar_driver_ros
-#   ${PCL_LIBRARIES}
-#   ${EIGEN_LIBRARIES}
-#   ${YAMLCPP_LIBRARIES}
-#   $ENV{HOME}/dora/target/debug/libdora_node_api_cxx.a
-#   m
-#   rt
-#   dl 
-#   pthread
-#   pcap
-# )
-
-
-
+ 

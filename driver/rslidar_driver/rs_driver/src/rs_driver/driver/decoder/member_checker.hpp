@@ -50,6 +50,7 @@ DEFINE_MEMBER_CHECKER(z)
 DEFINE_MEMBER_CHECKER(intensity)
 DEFINE_MEMBER_CHECKER(ring)
 DEFINE_MEMBER_CHECKER(timestamp)
+DEFINE_MEMBER_CHECKER(feature)
 
 #define RS_HAS_MEMBER(C, member) has_##member<C>::value
 
@@ -123,3 +124,13 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
   point.timestamp = value;
 }
 
+template <typename T_Point>
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, feature)>::type setFeature(T_Point& point, const uint8_t& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, feature)>::type setFeature(T_Point& point, const uint8_t& value)
+{
+  point.feature = value;
+}

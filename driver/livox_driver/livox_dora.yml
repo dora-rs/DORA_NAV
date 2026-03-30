@@ -1,0 +1,13 @@
+nodes:
+  - id: livox_driver
+    path: build/livox_dora_driver_node
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - pointcloud
+
+  # - id: lidar2rerun
+  #   path: ./lidar2rerun.py
+  #   inputs:
+  #     pointcloud: 
+  #       source: livox_driver/pointcloud

@@ -1,0 +1,19 @@
+nodes:
+  # rslidar driver node
+  - id: rslidar_driver
+    path: build/rslidar_driver
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - pointcloud_rs
+    env:
+      LIDAR_TYPE: RSHELIOS_16P  # RSAIRY RSHELIOS RSHELIOS_16P
+      ONLINE_LIDAR: 0  # 1: online   0: offine
+      PCAP_PATH: /home/mickrobot/dora_project/dora_data/fast_stable_straight.pcap
+  
+  - id: lidar2rerun
+    path: ./lidar2rerun.py
+    inputs:
+      pointcloud_rs: 
+        source: rslidar_driver/pointcloud_rs
+

@@ -1,9 +1,0 @@
-nodes:
-  - id: livox_driver
-    custom:
-      source: build/livox_dora_driver_node
-      # source: ../../dora-hardware/dora_to_ros2/lidar/build/rslidar_driver_pcap
-      inputs:
-        tick: dora/timer/millis/100
-      outputs:
-        - pointcloud

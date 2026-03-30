@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/split_strategy.hpp>
 #include <rs_driver/driver/decoder/block_iterator.hpp>
 #include <rs_driver/driver/decoder/chan_angles.hpp>
+#include <cmath>
 
 namespace robosense
 {
@@ -93,12 +94,14 @@ protected:
   ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
   AzimuthSection scan_section_; // valid azimuth section
   std::shared_ptr<SplitStrategy> split_strategy_; // split strategy
+  std::shared_ptr<SplitStrategy> pre_split_strategy_;
 
   uint16_t rps_; // rounds per second
   uint16_t blks_per_frame_; // blocks per frame/round
   uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
   uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
   double fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
+  float lidar_lens_center_Rxy_; // sqrt(Rx*Rx + Ry*Ry)
 };
 
 template <typename T_PointCloud>
@@ -121,18 +124,23 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   {
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS:
       split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->split_blks_per_frame_);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->split_blks_per_frame_);
       break;
 
     case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
       split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->param_.num_blks_split);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->param_.num_blks_split);
       break;
 
     case SplitFrameMode::SPLIT_BY_ANGLE:
     default:
       uint16_t angle = (uint16_t)(this->param_.split_angle * 100);
       split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
       break;
   }
+
+  lidar_lens_center_Rxy_ = std::sqrt(mech_const_param_.RX * mech_const_param_.RX + mech_const_param_.RY * mech_const_param_.RY);
 
   if (this->param_.config_from_file)
   {

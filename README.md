@@ -1,6 +1,17 @@
 # DORA_NAV
 
+
+
 DORA_NAV is an open-source autonomous navigation framework built on the [DORA](https://github.com/dora-rs/dora) dataflow orchestration framework. It supports differential-drive, omnidirectional, and Ackermann-type mobile robot chassis. The framework integrates sensor drivers, mapping, localization, perception, planning, and control into a complete point-to-point navigation pipeline.
+
+
+
+Directory Structure
+
+```
+~/dora          dora repository source code
+~/dora_project  dora projects (e.g. ~/dora_project/dora_nav)
+```
 
 ![Rerun Navigation Demo](images/dora_nav1.gif)
 

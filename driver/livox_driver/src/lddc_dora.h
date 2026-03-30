@@ -22,20 +22,16 @@
 // SOFTWARE.
 //
 
-#ifndef LIVOX_DORA_DRIVER2_LDDC_H_
-#define LIVOX_DORA_DRIVER2_LDDC_H_
+#ifndef LIVOX_ROS_DRIVER2_LDDC_H_
+#define LIVOX_ROS_DRIVER2_LDDC_H_
 
-#include "include/livox_ros_driver2.h"
-#include "dora_node.h"
+
+
 #include "lds.h"
-#include <nlohmann/json.hpp>
 
 namespace livox_ros {
 
-/** Send pointcloud message Data to dora subscriber */
-typedef enum {
-  kOutputToRos = 0,  // Reuse this enum for Dora output
-} DestinationOfMessageOutput;
+
 
 /** The message type of transfer */
 typedef enum {
@@ -45,56 +41,61 @@ typedef enum {
   kLivoxImuMsg = 3,
 } TransferType;
 
-class DoraNode;
 
-class LddcDora final {
+
+
+class Lddc final {
  public:
-  LddcDora(int format, int multi_topic, int data_src, int output_type, double frq,
-      std::string &frame_id, DoraNode* dora_node);
-  ~LddcDora();
+  Lddc(int format, int multi_topic, int data_src, 
+    double frq, std::string &frame_id);
+  ~Lddc();
 
   int RegisterLds(Lds *lds);
-  void DistributePointCloudData(void);
-  void DistributeImuData(void);
+  void DistributePointCloudData(void *dora_context);
+  void DistributeImuData(void *dora_context);
   void PrepareExit(void);
 
   uint8_t GetTransferFormat(void) { return transfer_format_; }
   uint8_t IsMultiTopic(void) { return use_multi_topic_; }
+
+
+  // void SetRosPub(ros::Publisher *pub) { global_pub_ = pub; };  // NOT USED
   void SetPublishFrq(uint32_t frq) { publish_frq_ = frq; }
 
  public:
   Lds *lds_;
 
  private:
-  void PollingLidarPointCloudData(uint8_t index, LidarDevice *lidar);
-  void PollingLidarImuData(uint8_t index, LidarDevice *lidar);
+  void PollingLidarPointCloudData(uint8_t index, LidarDevice *lidar, void *dora_context);
+  void PollingLidarImuData(uint8_t index, LidarDevice *lidar, void *dora_context);
 
-  void PublishPointcloud2(LidarDataQueue *queue, uint8_t index);
-  void PublishImuData(LidarImuDataQueue& imu_data_queue, const uint8_t index);
+  // void PublishCustomPointcloud(LidarDataQueue *queue, uint8_t index);
 
-  // JSON serialization methods
-  nlohmann::json SerializePointCloudToJson(const StoragePacket& pkg);
-  nlohmann::json SerializeImuToJson(const ImuData& imu_data);
-  
-  // Dora publishing methods
-  void PublishPointCloudJson(const nlohmann::json& json_data, const uint8_t index);
-  void PublishImuJson(const nlohmann::json& json_data, const uint8_t index);
 
-  std::string GetPointCloudTopicName(uint8_t index);
-  std::string GetImuTopicName(uint8_t index);
+  // void PublishImuData(LidarImuDataQueue& imu_data_queue, const uint8_t index);
+
+
+  // void InitCustomMsg(CustomMsg& livox_msg, const StoragePacket& pkg, uint8_t index);
+  // void FillPointsToCustomMsg(CustomMsg& livox_msg, const StoragePacket& pkg);
+  // void PublishCustomPointData(const CustomMsg& livox_msg, const uint8_t index);
+
+
+  // void InitImuMsg(const ImuData& imu_data, ImuMsg& imu_msg, uint64_t& timestamp);
+
+
+  // void FillPointsToCustomMsg(CustomMsg& livox_msg, LivoxPointXyzrtlt* src_point, uint32_t num,
+  //     uint32_t offset_time, uint32_t point_interval, uint32_t echo_num);
+
 
  private:
   uint8_t transfer_format_;
   uint8_t use_multi_topic_;
   uint8_t data_src_;
-  uint8_t output_type_;
   double publish_frq_;
   uint32_t publish_period_ns_;
   std::string frame_id_;
-
-  DoraNode* dora_node_;
 };
 
 }  // namespace livox_ros
 
-#endif // LIVOX_DORA_DRIVER2_LDDC_H_
+#endif // LIVOX_ROS_DRIVER2_LDDC_H_

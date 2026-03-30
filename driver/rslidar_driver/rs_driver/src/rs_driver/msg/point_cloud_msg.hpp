@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <string>
 
+#pragma pack(push, 1)
 struct PointXYZI
 {
   float x;
@@ -43,15 +44,22 @@ struct PointXYZI
   uint8_t intensity;
 };
 
-struct PointXYZIRT
+struct PointXYZIRT : public PointXYZI
 {
-  float x;
-  float y;
-  float z;
-  uint8_t intensity;
   uint16_t ring;
   double timestamp;
 };
+
+struct PointXYZIF : public PointXYZI
+{
+  uint8_t feature;
+};
+
+struct PointXYZIRTF : public PointXYZIRT
+{
+  uint8_t feature;
+};
+#pragma pack(pop)
 
 template <typename T_Point>
 class PointCloudT
@@ -69,4 +77,3 @@ public:
 
   VectorT points;
 };
-

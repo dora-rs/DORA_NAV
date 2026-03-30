@@ -1,0 +1,41 @@
+nodes: 
+  - id: livox_lidar
+    path: ../livox_driver/build/livox_dora_driver_node
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - pointcloud_livox
+
+  - id: rs_lidar
+    path: ../rslidar_driver/build/rslidar_driver
+    inputs:
+      tick:
+        source: dora/timer/millis/100
+    outputs:
+      - pointcloud_rs
+    env:
+      LIDAR_TYPE: "RSAIRY"
+      ONLINE_LIDAR: 1  # 1: online   0: offine
+      PCAP_PATH: fast_stable_straight.pcap
+  
+
+  # - id: multi_lidar_calibrator
+  #   path: multi_lidar_calibration/build/multi_lidar_calibrator
+  #   inputs:
+  #     pointcloud_rs:
+  #       source: rs_lidar/pointcloud_rs
+  #     pointcloud_livox:
+  #       source: livox_lidar/pointcloud_livox
+  #   outputs:
+  #     - pointcloud_calibrated
+
+  - id: pointcloud_merger
+    path: pointcloud_merger/build/pointcloud_merger
+    inputs:
+      pointcloud_rs:
+        source: rs_lidar/pointcloud_rs
+      pointcloud_livox:
+        source: livox_lidar/pointcloud_livox
+    outputs:
+      - pointcloud
+ 

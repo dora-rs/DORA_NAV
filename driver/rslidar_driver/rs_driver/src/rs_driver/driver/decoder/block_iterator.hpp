@@ -140,6 +140,87 @@ public:
 };
 
 template <typename T_Packet>
+class TwoInOneBlockIterator : public BlockIterator<T_Packet>
+{
+public:
+  TwoInOneBlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, uint16_t block_az_duration,
+                        double fov_blind_duration)
+    : BlockIterator<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration)
+  {
+    double tss = 0;
+    uint16_t blk = 0;
+    for (; blk < (this->BLOCKS_PER_PKT - 2); blk = blk + 2)
+    {
+      double ts_diff = this->BLOCK_DURATION;
+      int32_t az_diff = ntohs(this->pkt_.blocks[blk + 2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      if (az_diff < 0)
+      {
+        az_diff += 36000;
+      }
+
+      if (az_diff > 100)
+      {
+        az_diff = this->BLOCK_AZ_DURATION;
+        ts_diff = this->FOV_BLIND_DURATION;
+      }
+
+      this->az_diffs[blk] = 0;
+      this->az_diffs[blk + 1] = az_diff;
+      this->tss[blk] = this->tss[blk + 1] = tss;
+
+      tss += ts_diff;
+    }
+
+    this->az_diffs[blk] = 0;
+    this->az_diffs[blk + 1] = this->BLOCK_AZ_DURATION;
+    this->tss[blk] = this->tss[blk + 1] = tss;
+  }
+};
+
+template <typename T_Packet>
+class FourInOneBlockIterator : public BlockIterator<T_Packet>
+{
+public:
+  FourInOneBlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, uint16_t block_az_duration,
+                         double fov_blind_duration)
+    : BlockIterator<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration)
+  {
+    double tss = 0;
+    uint16_t blk = 0;
+    const uint16_t step = this->BLOCK_AZ_DURATION / 3;
+
+    for (; blk < (this->BLOCKS_PER_PKT - 4); blk = blk + 4)
+    {
+      double ts_diff = this->BLOCK_DURATION;
+      int32_t az_diff = ntohs(this->pkt_.blocks[blk + 4].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      if (az_diff < 0)
+      {
+        az_diff += 36000;
+      }
+
+      if (az_diff > 100)
+      {
+        ts_diff = this->FOV_BLIND_DURATION;
+      }
+
+      this->az_diffs[blk] = 0;
+      this->az_diffs[blk + 1] = step;
+      this->az_diffs[blk + 2] = step * 2;
+      this->az_diffs[blk + 3] = this->BLOCK_AZ_DURATION;
+      this->tss[blk] = this->tss[blk + 1] = this->tss[blk + 2] = this->tss[blk + 3] = tss;
+
+      tss += ts_diff;
+    }
+
+    this->az_diffs[blk] = 0;
+    this->az_diffs[blk + 1] = step;
+    this->az_diffs[blk + 2] = step * 2;
+    this->az_diffs[blk + 3] = this->BLOCK_AZ_DURATION;
+    this->tss[blk] = this->tss[blk + 1] = this->tss[blk + 2] = this->tss[blk + 3] = tss;
+  }
+};
+
+template <typename T_Packet>
 class ABDualReturnBlockIterator : public BlockIterator<T_Packet>
 {
 public:
