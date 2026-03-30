@@ -6,7 +6,7 @@ nodes:
   - id: mujoco_sim
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/simulation/mujoco_bridge/build/mujoco_sim_bridge
+      path: /root/Public/dora-nav/simulation/mujoco_bridge/build/mujoco_sim_bridge
       inputs:
         tick: dora/timer/millis/10
         SteeringCmd: latcontrol/SteeringCmd
@@ -16,7 +16,7 @@ nodes:
         - imu_msg
         - ground_truth_pose
     env:
-      MUJOCO_MODEL_PATH: /home/demo/Public/dora-nav/simulation/mujoco_bridge/models/robot_warehouse.xml
+      MUJOCO_MODEL_PATH: /root/Public/dora-nav/simulation/mujoco_bridge/models/robot_warehouse.xml
       SIM_TIMESTEP: "0.001"
       REAL_TIME_FACTOR: "1.0"
       LIDAR_RAYS: "1080"
@@ -34,7 +34,7 @@ nodes:
   - id: pub_road
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/map/pub_road/build/pubroad
+      path: /root/Public/dora-nav/map/pub_road/build/pubroad
       inputs:
         tick: dora/timer/millis/200
       outputs:
@@ -44,7 +44,7 @@ nodes:
   - id: road_lane_publisher_node
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/map/road_line_publisher/build/road_lane_publisher_node
+      path: /root/Public/dora-nav/map/road_line_publisher/build/road_lane_publisher_node
       inputs:
         road_lane: pub_road/road_lane
         cur_pose: mujoco_sim/ground_truth_pose
@@ -55,7 +55,7 @@ nodes:
   - id: task_pub_node
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/planning/mission_planning/task_pub/build/task_pub_node
+      path: /root/Public/dora-nav/planning/mission_planning/task_pub/build/task_pub_node
       inputs:
         tick: dora/timer/millis/20
       outputs:
@@ -65,7 +65,7 @@ nodes:
   - id: planning
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/planning/routing_planning/build/routing_planning_node
+      path: /root/Public/dora-nav/planning/routing_planning/build/routing_planning_node
       inputs:
         road_lane: pub_road/road_lane
         cur_pose_all: road_lane_publisher_node/cur_pose_all
@@ -78,7 +78,7 @@ nodes:
   - id: lon_control
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/control/vehicle_control/lon_controller/build/lon_controller_node
+      path: /root/Public/dora-nav/control/vehicle_control/lon_controller/build/lon_controller_node
       inputs:
         Request: planning/Request
       outputs:
@@ -88,7 +88,7 @@ nodes:
   - id: latcontrol
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/control/vehicle_control/lat_controller/build/lat_controller_node
+      path: /root/Public/dora-nav/control/vehicle_control/lat_controller/build/lat_controller_node
       inputs:
         raw_path: planning/raw_path
       outputs:
@@ -98,7 +98,7 @@ nodes:
   - id: rerun
     custom:
       source: Local
-      path: /home/demo/Public/dora-nav/rerun/build/to_rerun
+      path: /root/Public/dora-nav/rerun/build/to_rerun
       inputs:
         pointcloud: mujoco_sim/pointcloud
         raw_path: planning/raw_path
