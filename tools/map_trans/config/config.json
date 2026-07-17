@@ -1,0 +1,21 @@
+{
+  "input": {
+    "pcd_file": "../data/input/map.pcd"
+  },
+  "output": {
+    "pgm_file": "../data/output/map.pgm",
+    "yaml_file": "../data/output/map.yaml"
+  },
+  "map_parameters": {
+    "resolution": 0.05,
+    "min_height": -0.3,
+    "max_height": 0.2
+  },
+  "processing": {
+    "enable_downsample": false,
+    "voxel_size": 0.05,
+    "remove_outliers": true,
+    "outlier_radius": 0.5,
+    "outlier_min_neighbors": 5
+  }
+}

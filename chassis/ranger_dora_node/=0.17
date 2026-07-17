@@ -1,6 +1,0 @@
-Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
-Collecting python-xlib
-  Using cached https://pypi.tuna.tsinghua.edu.cn/packages/fc/b8/ff33610932e0ee81ae7f1269c890f697d56ff74b9f5b2ee5d9b7fa2c5355/python_xlib-0.33-py2.py3-none-any.whl (182 kB)
-Requirement already satisfied: six>=1.10.0 in /home/mickrobot/anaconda3/envs/dora/lib/python3.12/site-packages (from python-xlib) (1.17.0)
-Installing collected packages: python-xlib
-Successfully installed python-xlib-0.33

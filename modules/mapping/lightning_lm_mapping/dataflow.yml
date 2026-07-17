@@ -1,0 +1,26 @@
+nodes:
+  # Livox 雷达驱动节点
+  - id: livox_driver
+    path: bin/livox_driver_node
+    outputs:
+      - pointcloud              # 点云数据（二进制：ts+count+xyzi×N）
+      - imu                     # IMU 数据（JSON）
+
+  # Lightning-LM SLAM 建图节点
+  - id: lightning_slam
+    path: build/modules/mapping/lightning_lm_mapping/lightning_slam_node
+    inputs:
+      pointcloud: livox_driver/pointcloud
+      imu: livox_driver/imu
+    outputs:
+      - pose                    # 当前位姿（6DOF 二进制，48字节）
+      - full_map                # 完整地图（定期发送，点云格式）
+
+  # Rerun 可视化节点
+  - id: rerun_visualizer
+    path: build/modules/visualization/rerun_mapping/rerun_mapping_node
+    inputs:
+      pose_data: lightning_slam/pose
+      pointcloud: livox_driver/pointcloud
+      full_map: lightning_slam/full_map
+

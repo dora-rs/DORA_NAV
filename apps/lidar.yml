@@ -1,0 +1,23 @@
+nodes:
+  ####################### 雷达驱动节点 #######################
+  # RoboSense 速腾聚创雷达驱动
+  - id: rslidar_driver
+    path: ../build/modules/drivers/rslidar_sdk/rslidar_dora_node
+    outputs:
+      - pointcloud
+      - imu
+
+  # 备选: Livox MID360 雷达驱动
+  # - id: livox_driver
+  #   path: ../build/modules/drivers/livox_driver/livox_dora_driver
+  #   outputs:
+  #     - pointcloud
+  #     - imu
+
+  ####################### Rerun 点云可视化节点 #######################
+  # 实时接收雷达点云数据并在 Rerun Viewer 中 3D 显示
+  # 着色方案: 按强度 (intensity) 从蓝→绿→红映射
+  - id: rerun_lidar
+    path: ../build/modules/visualization/rerun_lidar/rerun_lidar
+    inputs:
+      pointcloud: rslidar_driver/pointcloud

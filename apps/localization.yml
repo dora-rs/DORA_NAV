@@ -1,0 +1,15 @@
+nodes:
+  - id: rslidar_driver
+    path: ../build/modules/drivers/rslidar_sdk/rslidar_dora_node
+    outputs:
+      - pointcloud
+      - imu
+
+  # HDL定位节点
+  - id: hdl_localization
+    path: ../build/modules/localization/hdl_localization_dora/hdl_localization_dora_node
+    inputs:
+      pointcloud: rslidar_driver/pointcloud
+      imu: rslidar_driver/imu
+    outputs:
+      - pose

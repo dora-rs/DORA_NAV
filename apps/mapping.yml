@@ -1,0 +1,12 @@
+nodes:
+  - id: rslidar_driver
+    path: ../build/modules/drivers/rslidar_sdk/rslidar_dora_node
+    outputs:
+      - pointcloud
+      - imu
+
+  - id: hdl_graph_slam_dora_node
+    path: ../build/modules/mapping/hdl_graph_slam_dora/hdl_graph_slam_dora_node
+    inputs:
+      pointcloud: rslidar_driver/pointcloud
+      imu: rslidar_driver/imu
