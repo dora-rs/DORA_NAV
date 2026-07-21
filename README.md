@@ -10,12 +10,12 @@ DORA-NAV 的目标是提供面向软硬件融合场景提供一体化导航整�
 
 ### 1、硬件、操作系统支持列表
 
-| 序号 |    硬件平台     |   系统    | 使用文档                                    |
-| :--: | :-------------: | :-------: | ------------------------------------------- |
-|  1   |     X86平台     |   linux   | 参考doc目录下 INSTALL_x86.md                |
-|  2   | Jetson AGX Orin |   linux   | 参考 doc目录下Jetson AGX Orin + Ubuntu20.04 |
-|  3   |   瑞莎星睿O6    |   linux   | 已支持                                      |
-|  4   |   瑞莎星睿O6    | 开源鸿蒙  | 已支持                                      |
-|  5   |      昇腾       | OpenEuler | 已支持                                      |
-|  6   |     RK3588      | 开源鸿蒙  | 已支持                                      |
+| 序号 |    硬件平台     |   系统    | 使用文档                                               |
+| :--: | :-------------: | :-------: | -------------------------------------------          |
+|  1   |     X86平台     |   linux   | 参考doc目录下 [INSTALL_x86.md](doc/INSTALL_x86.md)    |
+|  2   | Jetson AGX Orin |   linux   | 参考doc目录下 [INSTALL_Orin.md](doc/INSTALL_Orin.md)  |
+|  3   |   瑞莎星睿O6    |   linux   | 已支持                                                |
+|  4   |   瑞莎星睿O6    | 开源鸿蒙  | 已支持                                                 |
+|  5   |      昇腾       | OpenEuler | 参考 doc目录下 [INSTALL_310P.md](doc/INSTALL_310P.md) |
+|  6   |     RK3588      | 开源鸿蒙  | 已支持                                                |
 
