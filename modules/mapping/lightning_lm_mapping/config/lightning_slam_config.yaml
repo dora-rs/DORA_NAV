@@ -1,0 +1,94 @@
+# Lightning-LM SLAM 配置文件（适配 DORA 框架）
+
+common:
+  dataset: "navigation_framework"
+  lidar_topic: "pointcloud"      # DORA 话题名
+  imu_topic: "imu"
+
+# fasterlio 参数
+fasterlio:
+  lidar_type: 1                  # 1 for Livox serials LiDAR, 2 for Velodyne, 3 for Ouster, 4 for RoboSense
+  scan_line: 6                   # Livox HAP: 6, Mid360: 4
+  blind: 0.5                     # 盲区距离 (m)
+  time_scale: 1e-3               # 时间单位（仅对Velodyne生效）
+
+  skip_lidar_num: 0              # 点云跳帧数（0=不跳帧）
+  point_filter_num: 2            # 点云采样（每N个点取1个）
+  max_iteration: 4               # ESKF 最大迭代次数
+  filter_size_scan: 0.5          # scan 降采样体素大小 (m)
+  filter_size_map: 0.5           # map 降采样体素大小 (m)
+
+  ivox_grid_resolution: 0.5      # iVox 体素分辨率 (m)
+  ivox_nearby_type: 18           # 近邻搜索类型 (6/18/26)
+  esti_plane_threshold: 0.1      # 平面估计阈值
+
+  use_aa: false                  # Anderson 加速（可选）
+
+  # IMU 噪声参数
+  acc_cov: 0.1                   # 加速度协方差
+  gyr_cov: 0.1                   # 角速度协方差
+  b_acc_cov: 0.0001              # 加速度偏置协方差
+  b_gyr_cov: 0.0001              # 角速度偏置协方差
+
+  # IMU-LiDAR 外参
+  extrinsic_est_en: false        # 是否在线估计外参（建议关闭）
+  extrinsic_T: [0, 0, 0]         # 平移外参 [x, y, z] (m)
+  extrinsic_R: [1, 0, 0,         # 旋转外参（行优先）
+                0, 1, 0,
+                0, 0, 1]
+
+  keep_first_imu_estimation: false
+
+  # 关键帧阈值
+  kf_dis_th: 1.0                 # 关键帧距离阈值 (m)
+  kf_angle_th: 10.0              # 关键帧角度阈值 (deg)
+
+  # ICP 参数
+  enable_icp_part: true          # 启用点到点 ICP
+  plane_icp_weight: 300.0        # 点到面 ICP 权重
+  min_pts: 500                   # 配准所需最小点数
+  imu_filter: false              # IMU 滤波（特殊场景使用）
+  proj_kfs: false                # 投影关键帧
+
+# g2p5: 3D 转 2D 栅格地图
+g2p5:
+  esti_floor: true               # 动态估计地面（推荐开启）
+  lidar_height: 0.0              # 雷达安装高度 (m)
+  floor_height: -1.0             # 默认地面高度 (m)
+  min_th_floor: 0.3              # 障碍物最小高度 (m)
+  max_th_floor: 2.0              # 障碍物最大高度 (m)
+  grid_map_resolution: 0.2       # 栅格地图分辨率 (m)
+
+# 系统配置
+system:
+  with_loop_closing: true        # 启用回环检测（推荐）
+  with_ui: false                 # 3D UI（DORA环境建议关闭）
+  with_2dui: false               # 2D UI（DORA环境建议关闭）
+  with_g2p5: true                # 生成2D栅格地图
+  step_on_kf: false              # 关键帧处暂停（调试用）
+
+  map_path: ../modules/mapping/maps   # 地图保存路径
+  pub_tf: false                  # 发布TF（DORA环境不需要）
+
+# 回环检测参数
+loop_closing:
+  loop_kf_gap: 20                # 每隔多少关键帧检查一次
+  min_id_interval: 20            # 候选关键帧ID最小间隔
+  closest_id_th: 50              # 历史关键帧与当前帧ID间隔阈值
+  max_range: 20.0                # 候选帧最大距离 (m)
+  ndt_score_th: 1.3              # NDT 匹配分数阈值
+  with_height: false             # 高度约束（多层场景关闭）
+
+# ROI 过滤（点云高度范围）
+roi:
+  height_max: 10.0               # 最大高度 (m)
+  height_min: -0.3               # 最小高度 (m)
+  range_max: 100.0               # 最大距离 (m)
+  range_min: 0.2                 # 最小距离 (m)
+
+# 可视化参数（可选）
+ui:
+  car_length: 2.0                # 车辆长度 (m)
+  car_width: 1.6                 # 车辆宽度 (m)
+  car_height: 1.7                # 车辆高度 (m)
+  scans: 1                       # 显示扫描数量

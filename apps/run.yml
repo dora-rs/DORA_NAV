@@ -1,106 +1,103 @@
-nodes: 
-  - id: imu 
-    custom:
-      source: HWT9053modbus/build/imu_driver_node
-      inputs:
-        tick: dora/timer/millis/50
-      outputs:
-        - imu_msg
+nodes:
+######################传感器驱动########################
+  - id: rslidar_driver
+    path: ../build/modules/drivers/rslidar_sdk/rslidar_dora_node
+    outputs:
+      - pointcloud
+      - imu
 
-  - id: lidar 
-    custom:
-      source: rslidar_driver/build/rslidar_driver
-      inputs:
-        tick: dora/timer/millis/100
-      outputs:
-        - pointcloud
-      envs: 
-        ONLINE_LIDAR: 1       #   0 is pcap    1 is online lidar 
-        PCAP_PATH: /home/nvidia/dora_project/pcap/yewai.pcap
-        LIDAR_MSOP_PORT: 6699
-        LIDAR_DIFOP_PORT: 7788
-        LIDAR_TYPE: RSHELIOS_16
+  - id: livox_driver
+    path: ../build/modules/drivers/livox_driver/livox_dora_driver
+    outputs:
+      - pointcloud
+      - imu
+#######################################################
 
+######################定位算法#########################
+  # HDL定位节点
   - id: hdl_localization
-    custom:
-      source: dora-hdl_localization/build/hdl_localization
-      inputs: 
-        pointcloud: lidar/pointcloud
-        imu_msg: imu/imu_msg
-      outputs: 
-       - cur_pose
-      envs: 
-        use_imu: 0       #  1 using imu 
+    path: ../build/modules/localization/hdl_localization_dora/hdl_localization_dora_node
+    inputs:
+      pointcloud: rslidar_driver/pointcloud
+      imu: rslidar_driver/imu
+    outputs:
+      - pose
+#######################################################
 
-  - id: pub_road 
-    custom:
-      source: map/pub_road/build/pubroad
-      inputs:
-        tick: dora/timer/millis/200
-      outputs:
-        - road_lane
-        
-  - id: road_lane_publisher_node 
-    custom:
-      source: map/road_line_publisher/build/road_lane_publisher_node
-      inputs:
-        road_lane: pub_road/road_lane
-        cur_pose: hdl_localization/cur_pose
-      outputs:
-        - cur_pose_all  
-            
-  - id: task_pub_node 
-    custom:
-      source: planning/mission_planning/task_pub/build/task_pub_node
-      inputs:
-        tick: dora/timer/millis/20
-      outputs:
-        - road_attri_msg
-                    
-  - id: planning  
-    custom:
-      source: planning/routing_planning/build/routing_planning_node
-      inputs:
-        road_lane: pub_road/road_lane   
-        cur_pose_all: road_lane_publisher_node/cur_pose_all
-        road_attri_msg: task_pub_node/road_attri_msg
-      outputs:
-        - raw_path  
-        - Request
+  # 目标点发布节点（任务调度）
+  - id: goal_publisher
+    path: ../build/modules/interface/goal_publisher/goal_publisher_node
+    inputs:
+      timer: dora/timer/millis/100
+    outputs:
+      - goal
 
-  - id: lon_control
-    custom:
-      source: control/vehicle_control/lon_controller/build/lon_controller_node
-      inputs:
-        Request: planning/Request
-      outputs:
-        - TrqBreCmd
-        
-            
-  - id: latcontrol
-    custom:
-      source: control/vehicle_control/lat_controller/build/lat_controller_node
-      inputs:
-        raw_path: planning/raw_path
-      outputs:
-        - SteeringCmd #100hz
+#######################全局规划器#######################
+  # A* 全局路径规划节点
+  - id: astar_planner
+    path: ../build/modules/planner/global_planner/astar_planner_dora/astar_planner_dora_node
+    inputs:
+      pose: hdl_localization/pose
+      goal: goal_publisher/goal
+    outputs:
+      - path
+#######################################################
 
-  - id: control
-    custom:	
-      source: control/vehicle_control/vehicle_chassis_n3/build/vehicle_chassis_node
-      inputs:
-        SteeringCmd: latcontrol/SteeringCmd
-        TrqBreCmd: lon_control/TrqBreCmd
+#######################局部规划器#######################
+  # Pure Pursuit 局部路径跟踪节点
+  - id: pure_pursuit
+    path: ../build/modules/planner/local_planner/pure_pursuit_dora/pure_pursuit_dora_node
+    inputs:
+      timer: dora/timer/millis/50
+      goal: goal_publisher/goal
+      path: astar_planner/path
+      pose: hdl_localization/pose
+      Odometry: ranger_miniv3_node/Odometry
+      # Odometry: mickrobotx4/Odometry
+    outputs:
+      - cmd_vel
 
-        
-  - id: rerun 
-    custom:
-      source: rerun/build/to_rerun
-      inputs:
-        pointcloud: lidar/pointcloud
-        raw_path: planning/raw_path
-        cur_pose: hdl_localization/cur_pose
-        
+  # DWA 局部路径规划节点（路径跟踪 + 动态避障）
+  # - id: dwa_planner
+  #   path: ../build/modules/planner/local_planner/dwa_planner_dora/dwa_planner_dora_node
+  #   inputs:
+  #     timer: dora/timer/millis/50
+  #     path: astar_planner/path
+  #     pose: hdl_localization/pose
+  #     pointcloud: rslidar_driver/pointcloud
+  #     Odometry: mickrobotx4/Odometry
+  #   outputs:
+  #     - cmd_vel
+  #     - dwa_trajectories
+#######################################################
 
+#######################底盘节点#########################
+  # MickrRobotX4底盘节点
+  # - id: mickrobotx4
+  #   path: ../build/modules/chassis/dora_mickrobot/mickrobotx4
+  #   inputs:
+  #     timer: dora/timer/millis/10
+  #     # cmd_vel: pure_pursuit/cmd_vel
+  #     cmd_vel: dwa_planner/cmd_vel
+  #   outputs:
+  #     - Odometry
 
+  # Ranger MiniV3底盘节点
+  - id: ranger_miniv3_node
+    path: ../build/modules/chassis/ranger_dora_node/ranger_miniv3_node
+    inputs:
+      timer: dora/timer/millis/10
+      cmd_vel: pure_pursuit/cmd_vel
+      # cmd_vel: dwa_planner/cmd_vel
+    outputs:
+      - Odometry
+#######################################################
 
+  # Rerun可视化节点
+  - id: rerun_visualizer
+    path: ../build/modules/visualization/rerun_visualizer/rerun_visualizer
+    inputs:
+      pointcloud: rslidar_driver/pointcloud
+      pose: hdl_localization/pose
+      path: astar_planner/path
+      # dwa_trajectories: dwa_planner/dwa_trajectories

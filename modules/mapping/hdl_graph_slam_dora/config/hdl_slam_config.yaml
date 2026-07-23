@@ -1,0 +1,141 @@
+# ============================================================
+# HDL Graph SLAM Dora Configuration
+# ============================================================
+
+# ============================================================
+# 1. 点云预处理参数
+# ============================================================
+prefiltering:
+  downsample_method: "VOXELGRID"  # NONE | VOXELGRID | APPROX_VOXELGRID
+  downsample_resolution: 0.15     # 体素边长(m)。调小=点更多更密。MID360单帧稀疏,调密提升重叠与配准稳定性(fitness天然更低)
+
+  # 距离过滤
+  use_distance_filter: true
+  distance_near_thresh: 1.0       # 最近距离(m)
+  distance_far_thresh: 40.0       # 最远距离(m) - 100→40:室外远处点极稀且抖,制造误对应、抬高fitness,砍掉
+
+  # 离群点过滤
+  outlier_removal_method: "NONE"  # NONE | RADIUS | STATISTICAL
+  statistical_mean_k: 30
+  statistical_stddev: 1.2
+  radius_radius: 0.5
+  radius_min_neighbors: 2
+
+# ============================================================
+# 2. 扫描匹配里程计参数
+# ============================================================
+scan_matching_odometry:
+  # 关键帧选择
+  keyframe_delta_trans: 1.0       # 平移阈值(m) - 1.5→1.0:目标帧更新更勤,减小与target距离、提升重叠
+  keyframe_delta_angle: 0.5       # 旋转阈值(degree) - 1.0→0.5:转弯是重灾区,更早换目标帧
+  keyframe_delta_time: 10000.0    # 时间阈值(s), 很大表示不使用
+
+  # 配准质量与失败自愈(新增)
+  max_fitness_score: 2.5          # fitness超过此值判为失败。原硬编码1.0对室外稀疏场景过严(大量正常帧fitness=1.0~1.4被误判)
+  max_consecutive_failures: 5     # 连续失败达此数则用当前帧强制重锚定target,打破"目标帧过期→永久冻结"死循环
+
+  # 配准方法
+  registration_method: "FAST_GICP"  # ICP | GICP | NDT | GICP_OMP | NDT_OMP | FAST_GICP | FAST_VGICP
+  reg_num_threads: 4                 # 配准线程数(0=auto)
+  reg_transformation_epsilon: 0.01
+  reg_maximum_iterations: 100        # 室外场景增加迭代次数
+  reg_max_correspondence_distance: 2.0  # 5.0→2.0:5m太大,稀疏点云下易误匹配到远处错误结构;步行帧间位移小,2m足够且更抗误配
+
+  # NDT特定参数
+  reg_resolution: 1.0               # NDT体素大小(m)
+  reg_nn_search_method: "DIRECT7"   # KDTREE | DIRECT1 | DIRECT7
+
+  # GICP特定参数
+  reg_max_optimizer_iterations: 20
+  reg_use_reciprocal_correspondences: false
+  reg_correspondence_randomness: 20  # GICP估计每点协方差的近邻数。稀疏点云下不可调低(否则协方差估计更噪),保持20
+
+# ============================================================
+# 3. 图优化参数
+# ============================================================
+graph_slam:
+  # g2o求解器（使用实际可用的求解器）
+  g2o_solver_type: "lm_pcg"  # lm_pcg | gn_pcg (lm_var not available)
+  g2o_solver_num_iterations: 100  # 512→100:图优化在主线程同步跑,edges增大后单次达1.9s导致丢帧;室外无回环时100次足够收敛
+
+  # 关键帧选择（用于图节点）
+  keyframe_delta_trans: 2.0       # 平移阈值(m)
+  keyframe_delta_angle: 2.0       # 旋转阈值(degree)
+  max_keyframes_per_update: 5     # 10→5:每次图更新处理更少关键帧,进一步缩短单次优化阻塞时间
+
+  # 首帧固定
+  fix_first_node: true
+  fix_first_node_stddev: [10.0, 10.0, 10.0, 1.0, 1.0, 1.0]  # xyz rpy
+  fix_first_node_adaptive: true
+
+  # 更新间隔
+  graph_update_interval: 3.0      # 图优化间隔(s)
+  map_cloud_update_interval: 10.0 # 地图更新间隔(s)
+
+# ============================================================
+# 4. 回环检测参数
+# ============================================================
+loop_closure:
+  distance_thresh: 10.0           # 回环候选的最大水平距离(m)。只算x,y(Z受漂移污染不参与判断)
+  accum_distance_thresh: 35.0     # 候选帧与当前帧的最小累积路程差(m):须≥此值才算真回环,过滤轨迹上前后紧挨的近邻假回环
+  check_interval: 10.0            # 回环检测触发间隔(m):每走这么远检测一次。与accum_distance_thresh解耦,取小值保证走回起点段也能触发(原先35m太粗,终点段攒不够35m从不检测)
+  min_edge_interval: 50           # 最小关键帧索引间隔。密度~0.4m/帧,5帧间隔无意义;配合accum过滤做双保险
+  fitness_score_thresh: 0.5       # 适应度得分阈值
+
+  # 配准方法（同odometry）
+  registration_method: "FAST_GICP"
+  reg_num_threads: 4
+  reg_transformation_epsilon: 0.01
+  reg_maximum_iterations: 20         # 100→20:回环配准每候选跑一次GICP,100次迭代太重,单次耗时降约5倍,减少主线程阻塞时间
+  reg_max_correspondence_distance: 5.0  # 与odometry保持一致
+
+# ============================================================
+# 5. 约束边参数
+# ============================================================
+constraints:
+  # 里程计边
+  odometry_edge:
+    robust_kernel: "NONE"         # NONE | Huber | Cauchy | DCS | ...
+    robust_kernel_size: 1.0
+    use_const_inf_matrix: false
+    const_stddev_x: 0.5
+    const_stddev_q: 0.1
+    var_gain_a: 20.0
+    min_stddev_x: 0.1
+    max_stddev_x: 5.0
+    min_stddev_q: 0.05
+    max_stddev_q: 0.2
+
+  # 回环边
+  loop_closure_edge:
+    robust_kernel: "Huber"
+    robust_kernel_size: 1.0
+
+  # IMU约束边
+  imu:
+    time_offset: 0.0              # IMU时间偏移(s)
+
+    # IMU加速度边（重力向量约束）
+    # 实测:开启后图被大量绝对姿态先验拧歪,chi2持续上升、pose乱飞(糊成一坨)。
+    # 原因:关键帧爆炸时数百个绝对重力先验主导图;且行走时acc含横向分量非纯重力;外参未标定。
+    # 结论:在当前系统状态下为净负面,保持关闭。
+    acceleration:
+      enabled: false              # 关闭(见上方说明)
+      robust_kernel: "Huber"      # NONE | Huber | Cauchy | DCS
+      robust_kernel_size: 1.0
+      stddev: 3.0                 # 标准差
+
+    # IMU方向边（姿态约束）
+    orientation:
+      enabled: false             # 是否启用 - 临时禁用测试
+      robust_kernel: "Huber"      # NONE | Huber | Cauchy | DCS - 添加鲁棒核抑制异常
+      robust_kernel_size: 1.0
+      stddev: 1.0                 # 标准差 - 降低对IMU的信任度（原0.1太小）
+
+# ============================================================
+# 6. 地图保存参数
+# ============================================================
+map_saving:
+  auto_save_on_exit: true         # 程序退出时自动保存
+  map_cloud_resolution: 0.05      # 地图分辨率(m)
+  destination: "../modules/mapping/maps/hdl_slam_map.pcd"  # 保存路径（目录已存在）

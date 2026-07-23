@@ -2,7 +2,7 @@
 set -e
 
 NAV_ROOT="$(cd "$(dirname "$0")" && pwd)"
-DORA_ROOT="$HOME/Public/dora"
+DORA_ROOT="$HOME/dora"
 DORA_INCLUDE="$DORA_ROOT/apis/c/node"
 DORA_OPERATOR="$DORA_ROOT/apis/c/operator"
 DORA_LIB="$DORA_ROOT/target/release/libdora_node_api_c.a"
@@ -45,13 +45,16 @@ build_cmake_node() {
 }
 
 # Build each node
-build_cmake_node "map/pub_road" "pubroad"
-build_cmake_node "planning/mission_planning/task_pub" "task_pub_node"
-build_cmake_node "control/vehicle_control/lon_controller" "lon_controller_node"
-build_cmake_node "map/road_line_publisher" "road_lane_publisher_node"
-build_cmake_node "planning/routing_planning" "routing_planning_node"
-build_cmake_node "control/vehicle_control/lat_controller" "lat_controller_node"
-build_cmake_node "localization/dora-hdl_localization" "hdl_localization"
+build_cmake_node "driver/rslidar_driver" "rslidar_driver"
+build_cmake_node "mapping/test_rerun_mapping" "test_rerun_mapping"
+build_cmake_node "mapping/ndt_mapping"   "ndt_mapping"
+# build_cmake_node "map/pub_road" "pubroad"
+# build_cmake_node "planning/mission_planning/task_pub" "task_pub_node"
+# build_cmake_node "control/vehicle_control/lon_controller" "lon_controller_node"
+# build_cmake_node "map/road_line_publisher" "road_lane_publisher_node"
+# build_cmake_node "planning/routing_planning" "routing_planning_node"
+# build_cmake_node "control/vehicle_control/lat_controller" "lat_controller_node"
+#build_cmake_node "localization/dora-hdl_localization" "hdl_localization"
 
 echo ""
 echo "=== Build Summary ==="

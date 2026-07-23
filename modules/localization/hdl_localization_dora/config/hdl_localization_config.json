@@ -1,0 +1,75 @@
+{
+  "map": {
+    "pcd_file": "../maps/pcd/map.pcd",
+    "downsample_resolution": 0.3
+  },
+
+  "initial_pose": {
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "orientation": {
+      "w": 1.0,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  },
+
+  "transform": {
+    "lidar_to_base_link": {
+      "x": -0.45,
+      "y": 0.0,
+      "z": 0.0,
+      "roll": 0.0,
+      "pitch": 0.0,
+      "yaw": 0.0
+    }
+  },
+
+  "imu": {
+    "enabled": true,
+    "invert_acceleration": false,
+    "invert_gyroscope": false,
+    "cool_time_duration": 3.0
+  },
+
+  "ndt": {
+    "method": "NDT_OMP",
+    "resolution": 2.0,
+    "neighbor_search_method": "DIRECT1",
+    "neighbor_search_radius": 2.0,
+    "transformation_epsilon": 0.05,
+    "max_iterations": 10,
+    "num_threads": 8,
+    "max_fitness_score": 5.0
+  },
+
+  "scan_matching": {
+    "downsample_resolution": 0.6,
+    "min_range": 1.0,
+    "max_range": 50.0
+  },
+
+  "ukf": {
+    "process_noise": {
+      "position": 1.0,
+      "velocity": 1.0,
+      "orientation": 0.5,
+      "acc_bias": 0.001,
+      "gyro_bias": 0.0001
+    },
+    "measurement_noise": {
+      "position": 0.5,
+      "orientation": 0.001
+    }
+  },
+
+  "output": {
+    "publish_aligned_points": false,
+    "pose_topic": "pose",
+    "aligned_points_topic": "aligned_points"
+  }
+}

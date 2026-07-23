@@ -1,3 +1,0 @@
-[submodule "src/rs_driver"]
-	path = src/rs_driver
-	url = ../rs_driver.git

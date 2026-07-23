@@ -1,0 +1,9 @@
+{
+  "map": {
+    "pgm_file": "maps/pgm/map.pgm",
+    "yaml_file": "maps/pgm/map.yaml"
+  },
+  "output": {
+    "path_topic": "path"
+  }
+}
