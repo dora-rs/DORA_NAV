@@ -144,3 +144,5 @@ master/dev分支不包含和机械臂协同的部分，删除pure_pursuit发布�
 完善INSTALL文档，新增Orin的配置文档，调整yml文件。
 #### style: 完善INSTALL文档
 补充细节。
+#### docs: 新增310P对应INSTALL文档
+310P+OpenEuler
