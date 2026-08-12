@@ -1,0 +1,94 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mujoco model="mickrobot">
+  <compiler angle="radian" meshdir="/" autolimits="true" inertiafromgeom="false" />
+  <option timestep="0.002" gravity="0 0 -9.80665" integrator="implicitfast" />
+  <visual>
+    <global azimuth="135" elevation="-25" />
+  </visual>
+  <asset>
+    <material name="body_material" rgba="0.35 0.42 0.50 1" />
+    <mesh name="body_mesh"  file="/home/mickrobot/dora_project/DORA_NAV/modules/simulation/mujoco_mickrobot/models/mesh/mickx4_body.STL" scale="0.001 0.001 0.001" />
+    <mesh name="wheel_mesh" file="/home/mickrobot/dora_project/DORA_NAV/modules/simulation/mujoco_mickrobot/models/mesh/mickx4_wheel_8inches_2.STL" scale="0.001 0.001 0.001" />
+    <mesh name="lidar_mesh" file="/home/mickrobot/dora_project/DORA_NAV/modules/simulation/mujoco_mickrobot/models/mesh/lidar.STL" scale="0.001 0.001 0.001" />
+  </asset>
+  <worldbody>
+    <light name="sun" pos="0 0 8" dir="0 0 -1" directional="true" />
+    <geom name="ground" type="plane" size="50 50 0.1" rgba="0.32 0.35 0.38 1" friction="1.0 0.02 0.002" />
+    <geom name="boundary_north" type="box" pos="0 10 0.5" size="10 0.1 0.5" rgba="0.5 0.5 0.55 1" />
+    <geom name="boundary_south" type="box" pos="0 -10 0.5" size="10 0.1 0.5" rgba="0.5 0.5 0.55 1" />
+    <geom name="boundary_east" type="box" pos="10 0 0.5" size="0.1 10 0.5" rgba="0.5 0.5 0.55 1" />
+    <geom name="boundary_west" type="box" pos="-10 0 0.5" size="0.1 10 0.5" rgba="0.5 0.5 0.55 1" />
+    <geom name="box_near" type="box" pos="3 0 0.5" size="0.4 0.7 0.5" rgba="0.8 0.25 0.2 1" />
+    <geom name="box_far" type="box" pos="7 2 1.0" size="0.8 0.8 1.0" rgba="0.2 0.45 0.8 1" />
+    <geom name="cylinder" type="cylinder" pos="4 -3 0.75" size="0.5 0.75" rgba="0.9 0.65 0.15 1" />
+    <geom name="corridor_left" type="box" pos="0 3 0.6" size="3 0.1 0.6" rgba="0.35 0.7 0.4 1" />
+    <geom name="corridor_right" type="box" pos="0 5 0.6" size="3 0.1 0.6" rgba="0.35 0.7 0.4 1" />
+    <geom name="low_obstacle" type="box" pos="2 -1.5 0.12" size="0.6 0.6 0.12" rgba="0.75 0.35 0.75 1" />
+    <body name="base_footprint" pos="0 0 0" quat="1 0 0 0">
+      <freejoint name="base_freejoint" />
+      <body name="base_link" pos="0 0 0.1" quat="1 0 0 0">
+        <inertial mass="25" diaginertia="0.212 1.03 1.16" pos="0 0 0.0" quat="1 0 0 0" />
+        <geom name="base_collision" type="box" size="0.3 0.1667 0.125" friction="0.7 0.25 0.002" group="2" rgba="0.3 0.4 0.5 0.35" pos="0 0 0.05" quat="1 0 0 0" />
+        <geom name="base_visual" type="mesh" mesh="body_mesh" pos="-0.3 -0.1667 0" quat="1.0 0 0 0.0" contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+        <!--------   -->
+        <!--------   -->
+        <body name="left_front_wheel" pos="0.2 0.2 0.00" quat="1 0 0 0">
+          <inertial mass="1" diaginertia="0.0075 0.0075 0.01125" pos="0 0 0" quat="1 0 0 0" />
+          <joint name="left_front_wheel_joint" type="hinge" axis="0 1 0" damping="0.2" armature="0.01" />
+          <geom name="left_front_wheel_collision" type="cylinder" size="0.1 0.03" friction="1.2 0.02 0.002" group="2" rgba="0.12 0.12 0.12 0.5" pos="0 0 0" quat="0.707106781188 0.707106781185 0 0" />
+          <geom name="left_front_wheel_visual" type="mesh" mesh="wheel_mesh" pos="-0.12 0.05 -0.12" quat="0.707109018043 0 0 -0.707104544323" contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+        </body>
+        <!--------   -->
+        <!--------   -->
+        <body name="left_back_wheel" pos="-0.2 0.2 0.0" quat="1 0 0 0">
+          <inertial mass="1" diaginertia="0.0075 0.0075 0.01125" pos="0 0 0" quat="1 0 0 0" />
+          <joint name="left_back_wheel_joint" type="hinge" axis="0 1 0" damping="0.2" armature="0.01" />
+          <geom name="left_back_wheel_collision" type="cylinder" size="0.1 0.03" friction="1.2 0.02 0.002" group="2" rgba="0.12 0.12 0.12 0.5" pos="0 0 0" quat="0.707106781188 0.707106781185 0 0" />
+          <geom name="left_back_wheel_visual" type="mesh" mesh="wheel_mesh" pos="-0.12 0.05 -0.12" quat="0.707109018043 0 0 -0.707104544323" contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+        </body>
+        <!--------   -->
+        <!--------   -->
+        <body name="right_front_wheel" pos="0.2 -0.2 0.0" quat="1 0 0 0">
+          <inertial mass="1" diaginertia="0.0075 0.0075 0.01125" pos="0 0 0" quat="1 0 0 0" />
+          <joint name="right_front_wheel_joint" type="hinge" axis="0 1 0" damping="0.2" armature="0.01" />
+          <geom name="right_front_wheel_collision" type="cylinder" size="0.1 0.03" friction="1.2 0.02 0.002" group="2" rgba="0.12 0.12 0.12 0.5" pos="0 0 0" quat="0.707106781188 0.707106781185 0 0" />
+          <geom name="right_front_wheel_visual" type="mesh" mesh="wheel_mesh" pos="0.12 -0.05 -0.12" quat="0.707109018043 0 0 0.707104544323" contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+        </body>
+        <body name="right_back_wheel" pos="-0.2 -0.2 0.0" quat="1 0 0 0">
+          <inertial mass="1" diaginertia="0.0075 0.0075 0.01125" pos="0 0 0" quat="1 0 0 0" />
+          <joint name="right_back_wheel_joint" type="hinge" axis="0 1 0" damping="0.2" armature="0.01" />
+          <geom name="right_back_wheel_collision" type="cylinder" size="0.1 0.03" friction="1.2 0.02 0.002" group="2" rgba="0.12 0.12 0.12 0.5" pos="0 0 0" quat="0.707106781188 0.707106781185 0 0" />
+          <geom name="right_back_wheel_visual" type="mesh" mesh="wheel_mesh" pos="0.12 -0.05 -0.12" quat="0.707109018043 0 0 0.707104544323" contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+        </body>
+        <body name="lidar_link" pos="0.25 0 0.25" quat="1 0 0 0">
+          <inertial mass="0.2" diaginertia="0.00008333 0.00008333 0.00008333" pos="0 0 0" quat="1 0 0 0" />
+          <geom name="lidar_visual" type="mesh" mesh="lidar_mesh" pos="0.025 -0.035 0" quat="0 0 0.707106781188 0.707106781185 " contype="0" conaffinity="0" group="1" rgba="0.55 0.58 0.62 1" />
+          <site name="lidar_site" type="sphere" size="0.005" group="3" rgba="1 0 0 1" pos="0 0 0" quat="1 0 0 0" />
+        </body>
+        <body name="camera_link" pos="0.25 0 0.35" quat="1 0 0 0">
+          <site name="camera_site" type="sphere" size="0.005" group="3" rgba="0 1 0 1" pos="0 0 0" quat="1 0 0 0" />
+          <camera name="front_camera" mode="fixed" fovy="73.7397952917" pos="0 0 0" quat="0.500000000002 0.5 -0.499999999998 -0.5" />
+        </body>
+        <body name="imu_link" pos="0.25 0 0.21" quat="1 0 0 0">
+          <site name="imu_site" type="sphere" size="0.004" group="3" rgba="0 0 1 1" pos="0 0 0" quat="1 0 0 0" />
+        </body>
+        <body name="gnss_link" pos="0.25 0 0.45" quat="1 0 0 0">
+          <site name="gnss_site" type="sphere" size="0.004" group="3" rgba="1 1 0 1" pos="0 0 0" quat="1 0 0 0" />
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <velocity name="left_front_wheel_actuator" joint="left_front_wheel_joint" kv="20" forcerange="-100 100" />
+    <velocity name="left_back_wheel_actuator" joint="left_back_wheel_joint" kv="20" forcerange="-100 100" />
+    <velocity name="right_front_wheel_actuator" joint="right_front_wheel_joint" kv="20" forcerange="-100 100" />
+    <velocity name="right_back_wheel_actuator" joint="right_back_wheel_joint" kv="20" forcerange="-100 100" />
+  </actuator>
+  <sensor>
+    <framequat name="imu_orientation" objtype="site" objname="imu_site" />
+    <gyro name="imu_gyro" site="imu_site" />
+    <accelerometer name="imu_accelerometer" site="imu_site" />
+    <framepos name="gnss_position" objtype="site" objname="gnss_site" />
+    <framelinvel name="gnss_velocity" objtype="site" objname="gnss_site" />
+  </sensor>
+</mujoco>

@@ -1,0 +1,6 @@
+.venv/
+models/assets/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+src/*.egg-info/
