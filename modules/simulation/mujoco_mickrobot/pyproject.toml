@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mujoco-mickrobot"
+version = "0.1.0"
+description = "MuJoCo and Dora simulation for MickRobot"
+requires-python = ">=3.10"
+dependencies = [
+  "dora-rs>=0.3,<1",
+  "mujoco>=3.2,<4",
+  "numpy>=1.24,<3",
+  "pyarrow>=14,<26",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+rerun = ["rerun-sdk>=0.36,<1"]
+test = ["pytest>=7,<10", "pytest-timeout>=2,<3"]
+
+[project.scripts]
+mujoco-mickrobot = "mujoco_mickrobot.main:main"
+mujoco-mickrobot-rerun = "mujoco_mickrobot.rerun_viewer:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "integration: requires MuJoCo runtime resources",
+  "dora: requires the Dora CLI/runtime",
+  "performance: measures target-machine timing",
+]

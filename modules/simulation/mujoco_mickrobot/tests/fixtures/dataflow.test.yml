@@ -1,0 +1,33 @@
+nodes:
+  - id: cmd_vel_sender
+    path: cmd_vel_sender.py
+    inputs:
+      tick: dora/timer/millis/100
+      Odometry: mujoco_mickrobot/Odometry
+      imu: mujoco_mickrobot/imu
+    outputs:
+      - cmd_vel
+
+  - id: mujoco_mickrobot
+    path: ../../.venv/bin/mujoco-mickrobot
+    inputs:
+      cmd_vel: cmd_vel_sender/cmd_vel
+    outputs:
+      - pointcloud
+      - image
+      - imu
+      - Odometry
+      - gnss
+    env:
+      MUJOCO_HEADLESS: "1"
+      MUJOCO_FASTEST: "1"
+      MUJOCO_GL: "egl"
+
+  - id: sensor_collector
+    path: sensor_collector.py
+    inputs:
+      pointcloud: mujoco_mickrobot/pointcloud
+      image: mujoco_mickrobot/image
+      imu: mujoco_mickrobot/imu
+      Odometry: mujoco_mickrobot/Odometry
+      gnss: mujoco_mickrobot/gnss

@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<mujoco_extensions>
+  <visual contype="0" conaffinity="0" group="1"/>
+  <collision group="2"/>
+  <body target="base_footprint">
+    <freejoint name="base_freejoint"/>
+  </body>
+
+  <body target="base_link">
+    <body name="camera_link" pos="0.40 0 0.35">
+      <site name="camera_site" type="sphere" size="0.005" group="3" rgba="0 1 0 1"/>
+      <camera name="front_camera" mode="fixed" xyaxes="0 -1 0 0 0 1"/>
+    </body>
+    <body name="imu_link" pos="0 0 0.25">
+      <site name="imu_site" type="sphere" size="0.004" group="3" rgba="0 0 1 1"/>
+    </body>
+    <body name="gnss_link" pos="0 0 0.45">
+      <site name="gnss_site" type="sphere" size="0.004" group="3" rgba="1 1 0 1"/>
+    </body>
+  </body>
+
+  <body target="lidar_link">
+    <site name="lidar_site" type="sphere" size="0.005" group="3" rgba="1 0 0 1"/>
+  </body>
+
+  <joint target="left_front_wheel_joint" damping="0.2" armature="0.01"/>
+  <joint target="left_back_wheel_joint" damping="0.2" armature="0.01"/>
+  <joint target="right_front_wheel_joint" damping="0.2" armature="0.01"/>
+  <joint target="right_back_wheel_joint" damping="0.2" armature="0.01"/>
+
+  <geom target="base_link_collision_0" friction="0.7 0.25 0.002"/>
+  <geom target="left_front_wheel_collision_0" friction="1.2 0.02 0.002"/>
+  <geom target="left_back_wheel_collision_0" friction="1.2 0.02 0.002"/>
+  <geom target="right_front_wheel_collision_0" friction="1.2 0.02 0.002"/>
+  <geom target="right_back_wheel_collision_0" friction="1.2 0.02 0.002"/>
+
+  <actuator>
+    <velocity name="left_front_wheel_actuator" joint="left_front_wheel_joint" kv="20" forcerange="-100 100"/>
+    <velocity name="left_back_wheel_actuator" joint="left_back_wheel_joint" kv="20" forcerange="-100 100"/>
+    <velocity name="right_front_wheel_actuator" joint="right_front_wheel_joint" kv="20" forcerange="-100 100"/>
+    <velocity name="right_back_wheel_actuator" joint="right_back_wheel_joint" kv="20" forcerange="-100 100"/>
+  </actuator>
+
+  <sensor>
+    <framequat name="imu_orientation" objtype="site" objname="imu_site"/>
+    <gyro name="imu_gyro" site="imu_site"/>
+    <accelerometer name="imu_accelerometer" site="imu_site"/>
+    <framepos name="gnss_position" objtype="site" objname="gnss_site"/>
+    <framelinvel name="gnss_velocity" objtype="site" objname="gnss_site"/>
+  </sensor>
+</mujoco_extensions>
