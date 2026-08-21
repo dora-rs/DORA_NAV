@@ -28,6 +28,7 @@
 #include "include/livox_ros_driver2.h"
 #include "dora_node.h"
 #include "lds.h"
+#include "point_cloud_format.hpp"
 #include <atomic>
 #include <future>
 #include <memory>
@@ -100,7 +101,7 @@ class LddcDora final {
   void PublishImuData(LidarImuDataQueue& imu_data_queue, const uint8_t index);
 
   // Point cloud: binary serialisation (avoids JSON text overhead for large payloads)
-  std::vector<char> SerializePointCloudToBinary(const StoragePacket& pkg);
+  std::vector<char> SerializePointCloudToBinary(const StoragePacket& pkg, uint8_t index);
   void PublishPointCloudBinary(const std::vector<char>& buf, const uint8_t index);
 
   // IMU: JSON is fine — payload is tiny (~200 bytes/frame)
@@ -118,6 +119,9 @@ class LddcDora final {
   double   publish_frq_;
   uint32_t publish_period_ns_;
   std::string frame_id_;
+  livox_dora::PointCloudFormat point_cloud_format_ =
+      livox_dora::PointCloudFormat::XYZI;
+  std::atomic<uint32_t> point_cloud_sequence_{0};
 
   DoraNode* dora_node_;
 

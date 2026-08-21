@@ -29,6 +29,8 @@
 #include <thread>
 #include <string>
 #include "livox_ros_driver2.h"
+#include "point_cloud_format.hpp"
+#include <cstdlib>
 #include "dora_node.h"
 #include "lddc_dora.h"
 #include "lds_lidar.h"
@@ -41,6 +43,13 @@ using namespace livox_ros;
 
 int main(int argc, char **argv) {
   std::cout << "Livox Dora Driver Version: " << LIVOX_ROS_DRIVER2_VERSION_STRING << std::endl;
+
+  try {
+    (void)livox_dora::parsePointCloudFormat(std::getenv("POINT_CLOUD_FORMAT"));
+  } catch (const std::invalid_argument& error) {
+    std::cerr << "Invalid point cloud format: " << error.what() << std::endl;
+    return -1;
+  }
 
   // ── Dora context ──────────────────────────────────────────────────────────
   void *dora_context = init_dora_context_from_env();

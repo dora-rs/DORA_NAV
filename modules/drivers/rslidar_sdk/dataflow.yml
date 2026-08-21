@@ -1,0 +1,8 @@
+nodes:
+  - id: rslidar_driver
+    path: ../../../build/modules/drivers/rslidar_sdk/rslidar_dora_node
+    env:
+      POINT_CLOUD_FORMAT: "XYZITRR"
+    outputs:
+      - pointcloud
+      - imu

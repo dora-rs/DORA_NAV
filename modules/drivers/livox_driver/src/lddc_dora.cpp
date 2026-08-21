@@ -36,6 +36,7 @@
 #include <chrono>
 #include <cstring>
 #include <vector>
+#include <cstdlib>
 #include <nlohmann/json.hpp>
 
 namespace livox_ros {
@@ -49,11 +50,15 @@ LddcDora::LddcDora(int format, int multi_topic, int data_src, int output_type,
       output_type_(output_type),
       publish_frq_(frq),
       frame_id_(frame_id),
+      point_cloud_format_(livox_dora::parsePointCloudFormat(
+          std::getenv("POINT_CLOUD_FORMAT"))),
       dora_node_(dora_node),
       lds_(nullptr),
       future_(exit_signal_.get_future()) {
   publish_period_ns_ = kNsPerSecond / publish_frq_;
   std::cout << "LddcDora initialized with publish frequency: " << publish_frq_ << " Hz" << std::endl;
+  std::cout << "Point cloud format: "
+            << livox_dora::pointCloudFormatName(point_cloud_format_) << std::endl;
 }
 
 LddcDora::~LddcDora() {
@@ -196,7 +201,7 @@ void LddcDora::PublishPointcloud2(LidarDataQueue *queue, uint8_t index) {
       continue;
     }
 
-    std::vector<char> buf = SerializePointCloudToBinary(pkg);
+    std::vector<char> buf = SerializePointCloudToBinary(pkg, index);
     PublishPointCloudBinary(buf, index);
   }
 }
@@ -213,37 +218,17 @@ void LddcDora::PublishImuData(LidarImuDataQueue& imu_data_queue, const uint8_t i
 
 // ── Serialisation ──────────────────────────────────────────────────────────
 
-/**
- * Binary wire format (little-endian, packed):
- *   [0..7]   double   timestamp      (seconds, base_time / 1e9)
- *   [8..11]  uint32_t num_points
- *   [12..]   N × 16 bytes: float32 x, y, z, intensity
- */
-std::vector<char> LddcDora::SerializePointCloudToBinary(const StoragePacket& pkg) {
-  const uint32_t n = static_cast<uint32_t>(pkg.points_num);
-  constexpr size_t HEADER_SIZE = sizeof(double) + sizeof(uint32_t); // 12 bytes
-  constexpr size_t POINT_SIZE  = 4 * sizeof(float);                 // 16 bytes
-
-  std::vector<char> buf(HEADER_SIZE + n * POINT_SIZE);
-  char* ptr = buf.data();
-
-  double ts = pkg.base_time / 1e9;
-  std::memcpy(ptr, &ts, sizeof(double));  ptr += sizeof(double);
-
-  std::memcpy(ptr, &n, sizeof(uint32_t)); ptr += sizeof(uint32_t);
-
-  for (uint32_t i = 0; i < n; ++i) {
-    float vals[4] = {
-      pkg.points[i].x,
-      pkg.points[i].y,
-      pkg.points[i].z,
-      pkg.points[i].intensity
-    };
-    std::memcpy(ptr, vals, POINT_SIZE);
-    ptr += POINT_SIZE;
+/** Serialize using the POINT_CLOUD_FORMAT selected at process startup. */
+std::vector<char> LddcDora::SerializePointCloudToBinary(
+    const StoragePacket& pkg, uint8_t index) {
+  const uint32_t sequence = point_cloud_sequence_.fetch_add(1);
+  if (point_cloud_format_ == livox_dora::PointCloudFormat::XYZITRR) {
+    return livox_dora::serializeXyzitrr(sequence, pkg.base_time, pkg.points);
   }
-
-  return buf;
+  if (point_cloud_format_ == livox_dora::PointCloudFormat::MID360) {
+    return livox_dora::serializeMid360(sequence, pkg.base_time, index, pkg.points);
+  }
+  return livox_dora::serializeXyzi(pkg.base_time, pkg.points);
 }
 
 nlohmann::json LddcDora::SerializeImuToJson(const ImuData& imu_data) {

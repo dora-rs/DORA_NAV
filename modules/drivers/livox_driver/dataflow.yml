@@ -1,0 +1,8 @@
+nodes:
+  - id: livox_driver
+    path: ../../../build/modules/drivers/livox_driver/livox_dora_driver
+    env:
+      POINT_CLOUD_FORMAT: "MID360"
+    outputs:
+      - pointcloud
+      - imu

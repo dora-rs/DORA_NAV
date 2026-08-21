@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "source/source.hpp"
+#include "point_cloud_format.hpp"
+#include <cstdlib>
 #include <mutex>
 #include <vector>
 #include <cstring>
@@ -78,6 +80,8 @@ private:
   std::string pointcloud_output_;   // 点云输出名称
   std::string imu_output_;          // IMU输出名称
   std::string frame_id_;            // 坐标系ID
+  rslidar_dora::PointCloudFormat point_cloud_format_ =
+      rslidar_dora::PointCloudFormat::XYZI;
 };
 
 inline DestinationPointCloudDora::DestinationPointCloudDora(void* dora_context)
@@ -89,10 +93,14 @@ inline void DestinationPointCloudDora::init(const YAML::Node& config) {
   pointcloud_output_ = "pointcloud";
   imu_output_ = "imu";
   frame_id_ = "rslidar_frame";  // 固定frame_id
+  point_cloud_format_ =
+      rslidar_dora::parsePointCloudFormat(std::getenv("POINT_CLOUD_FORMAT"));
 
   RS_INFO << "Dora PointCloud Output: " << pointcloud_output_ << RS_REND;
   RS_INFO << "Dora IMU Output: " << imu_output_ << RS_REND;
   RS_INFO << "Frame ID: " << frame_id_ << RS_REND;
+  RS_INFO << "Point cloud format: "
+          << rslidar_dora::pointCloudFormatName(point_cloud_format_) << RS_REND;
 }
 
 inline void DestinationPointCloudDora::sendPointCloud(const LidarPointCloudMsg& msg) {
@@ -155,48 +163,14 @@ inline void DestinationPointCloudDora::sendImuData(const std::shared_ptr<ImuData
 }
 #endif
 
-/**
- * @brief 点云二进制序列化（统一XYZI格式，与Livox驱动一致）
- *
- * 格式（小端序，16字节/点）:
- *   [0..7]    double   timestamp       (秒)
- *   [8..11]   uint32_t num_points      (点数量)
- *   [12..]    N × 16 bytes: float32 x, y, z, intensity
- */
+/** @brief 按 POINT_CLOUD_FORMAT 序列化为 XYZI 或 FLIO XYZITRR。 */
 inline std::vector<char> DestinationPointCloudDora::serializePointCloudToBinary(
     const LidarPointCloudMsg& msg) {
 
-  const uint32_t num_points = static_cast<uint32_t>(msg.points.size());
-  constexpr size_t HEADER_SIZE = sizeof(double) + sizeof(uint32_t);  // 12 bytes
-  constexpr size_t POINT_SIZE  = 4 * sizeof(float);                  // 16 bytes
-  const size_t total_size = HEADER_SIZE + num_points * POINT_SIZE;
-
-  std::vector<char> buf(total_size);
-  char* ptr = buf.data();
-
-  // 写入时间戳（秒）
-  double timestamp = msg.timestamp;
-  std::memcpy(ptr, &timestamp, sizeof(double));
-  ptr += sizeof(double);
-
-  // 写入点数量
-  std::memcpy(ptr, &num_points, sizeof(uint32_t));
-  ptr += sizeof(uint32_t);
-
-  // 写入点数据（XYZI格式）
-  for (uint32_t i = 0; i < num_points; ++i) {
-    const auto& point = msg.points[i];
-    float vals[4] = {
-      point.x,
-      point.y,
-      point.z,
-      static_cast<float>(point.intensity)
-    };
-    std::memcpy(ptr, vals, POINT_SIZE);
-    ptr += POINT_SIZE;
+  if (point_cloud_format_ == rslidar_dora::PointCloudFormat::XYZITRR) {
+    return rslidar_dora::serializeXyzitrr(msg.seq, msg.timestamp, msg.points);
   }
-
-  return buf;
+  return rslidar_dora::serializeXyzi(msg.timestamp, msg.points);
 }
 
 #ifdef ENABLE_IMU_DATA_PARSE

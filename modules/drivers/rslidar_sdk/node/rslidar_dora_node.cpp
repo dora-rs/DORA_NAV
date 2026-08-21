@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/macro/version.hpp>
 #include <signal.h>
 #include <iostream>
+#include <cstdlib>
+#include "point_cloud_format.hpp"
 
 extern "C" {
 #include "node_api.h"
@@ -51,6 +53,13 @@ static void sigHandler(int sig) {
 
 int main(int argc, char** argv) {
   signal(SIGINT, sigHandler);
+
+  try {
+    (void)rslidar_dora::parsePointCloudFormat(std::getenv("POINT_CLOUD_FORMAT"));
+  } catch (const std::invalid_argument& error) {
+    std::cerr << "Invalid point cloud format: " << error.what() << std::endl;
+    return -1;
+  }
 
   RS_TITLE << "********************************************************" << RS_REND;
   RS_TITLE << "**********                                    **********" << RS_REND;

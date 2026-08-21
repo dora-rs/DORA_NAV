@@ -1,9 +1,9 @@
 project(rslidar_dora_node)
 
 #========================
-# Point Type - Fixed to XYZI (unified with Livox driver)
+# Point Type - retain ring and per-point timestamp for optional XYZITRR output
 #========================
-add_definitions(-DPOINT_TYPE_XYZI)
+add_definitions(-DPOINT_TYPE_XYZIRT)
 
 #========================
 # Driver Options
@@ -53,4 +53,4 @@ target_link_libraries(${PROJECT_NAME}
     ${DORA_NODE_API_LIB}
 )
 
-message(STATUS "rslidar_dora_node: Point type XYZI, IMU parsing ${ENABLE_IMU_DATA_PARSE}")
+message(STATUS "rslidar_dora_node: Point type XYZIRT, output selected by POINT_CLOUD_FORMAT, IMU parsing ${ENABLE_IMU_DATA_PARSE}")
