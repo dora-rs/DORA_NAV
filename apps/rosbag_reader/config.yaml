@@ -1,0 +1,19 @@
+# ROSbag Reader Config — DORA_NAV GSoC Project #9
+# Author: kaushikteja26
+
+bag:
+  path: test_bag/          # path to rosbag folder
+  speed: 1.0               # 0.5=slow, 1.0=normal, 2.0=fast
+  loop: false              # loop playback
+  loops: 1                 # how many times to loop
+
+topics:
+  - /imu/data              # IMU sensor
+  - /gps/fix               # GPS sensor
+  - /odom                  # Odometry
+  - /camera/image_raw      # Camera
+  - /pointcloud            # LiDAR PointCloud
+
+output:
+  format: arrow            # apache arrow format for DORA
+  verbose: true            # print messages to terminal

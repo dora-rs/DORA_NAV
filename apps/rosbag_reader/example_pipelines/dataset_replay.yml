@@ -1,0 +1,23 @@
+# Pipeline 1: Dataset Replay
+# Author: kaushikteja26
+# GSoC 2026 Project #9
+# Usage: dora start example_pipelines/dataset_replay.yml
+
+nodes:
+  - id: rosbag_reader
+    path: apps/rosbag_reader/dora_rosbag_node.py
+    outputs:
+      - imu_data
+      - gps_data
+      - odom_data
+    env:
+      BAG_PATH: apps/rosbag_reader/test_bag/
+      SPEED: "1.0"
+      LOOP: "false"
+
+  - id: printer
+    path: apps/rosbag_reader/printer_node.py
+    inputs:
+      imu_data:  rosbag_reader/imu_data
+      gps_data:  rosbag_reader/gps_data
+      odom_data: rosbag_reader/odom_data
