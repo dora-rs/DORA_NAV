@@ -1,0 +1,90 @@
+# Full Navigation Pipeline - Mujoco Warehouse Simulation
+
+nodes:
+  # Mujoco simulation bridge - simulated LiDAR, IMU, ground truth
+  - id: mujoco_sim
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/simulation/mujoco_bridge/build/mujoco_sim_bridge
+      inputs:
+        tick: dora/timer/millis/10
+        twist_cmd: local_planner/twist_cmd
+      outputs:
+        - pointcloud
+        - imu_msg
+        - ground_truth_pose
+    env:
+      MUJOCO_MODEL_PATH: /home/nav/dora-nav/simulation/mujoco_bridge/models/robot_warehouse.xml
+      SIM_TIMESTEP: "0.001"
+      REAL_TIME_FACTOR: "1.0"
+      LIDAR_RAYS: "1080"
+      LIDAR_VERTICAL_BEAMS: "16"
+      LIDAR_RANGE: "100.0"
+      LIDAR_MIN_RANGE: "0.5"
+      POINTCLOUD_RATE: "10"
+      IMU_RATE: "20"
+      IMU_ADD_NOISE: "1"
+
+  # Road publisher
+  - id: pub_road
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/map/pub_road/build/pubroad
+      inputs:
+        tick: dora/timer/millis/200
+      outputs:
+        - road_lane
+
+  # Road lane publisher (using ground truth pose from sim instead of localization)
+  - id: road_lane_publisher_node
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/map/road_line_publisher/build/road_lane_publisher_node
+      inputs:
+        road_lane: pub_road/road_lane
+        cur_pose: mujoco_sim/ground_truth_pose
+      outputs:
+        - cur_pose_all
+
+  # Task publisher
+  - id: task_pub_node
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/planning/mission_planning/task_pub/build/task_pub_node
+      inputs:
+        tick: dora/timer/millis/20
+      outputs:
+        - road_attri_msg
+
+  # Planning
+  - id: planning
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/planning/routing_planning/build/routing_planning_node
+      inputs:
+        road_lane: pub_road/road_lane
+        cur_pose_all: road_lane_publisher_node/cur_pose_all
+        road_attri_msg: task_pub_node/road_attri_msg
+      outputs:
+        - raw_path
+        - Request
+
+  - id: local_planner
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/planning/local_planning/build/local_planner_node
+      inputs:
+        pointcloud: mujoco_sim/pointcloud
+        raw_path: planning/raw_path
+      outputs:
+        - twist_cmd
+
+  # Visualization with Rerun
+  - id: rerun
+    custom:
+      source: Local
+      path: /home/nav/dora-nav/rerun/build/to_rerun
+      inputs:
+        pointcloud: mujoco_sim/pointcloud
+        raw_path: planning/raw_path
+        cur_pose: mujoco_sim/ground_truth_pose
