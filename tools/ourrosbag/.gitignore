@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyi
+*.pyd
+*.so
+*.dll
+.python-version
+.env
+*.egg-info/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Build / Distribution
+build/
+dist/
+cpp/build/
+
+# Data / Output
+data/
+output/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
