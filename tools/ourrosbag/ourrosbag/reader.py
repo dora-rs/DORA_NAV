@@ -3,11 +3,44 @@ from .config import BagConfig
 
 
 def _is_v3(path: Path) -> bool:
-    # v3 (ROS2) bags are directories containing metadata.yaml
-    # v2 (ROS1) bags are single .bag files
+    """v3 (ROS2) bags are directories containing metadata.yaml.
+    v2 (ROS1) bags are single .bag files."""
     if path.is_dir():
         return (path / "metadata.yaml").exists()
     return False
+
+
+def _read_v3_metadata(path: Path) -> dict:
+    """Parse metadata.yaml from a ROS 2 bag directory.
+    Returns a dict with storage_plugin, duration_ns, and message_count,
+    or empty dict if parsing fails."""
+    meta_path = path / "metadata.yaml"
+    if not meta_path.exists():
+        return {}
+    try:
+        import yaml
+        with open(meta_path, "r") as f:
+            raw = yaml.safe_load(f)
+        info = raw.get("rosbag2_bagfile_information", {})
+        if not info:
+            return {}
+
+        storage = info.get("storage_identifier", "unknown")
+        duration = info.get("duration", {})
+        # duration can be a dict with nanoseconds key, or a plain int
+        if isinstance(duration, dict):
+            duration_ns = duration.get("nanoseconds", 0)
+        else:
+            duration_ns = int(duration) if duration else 0
+        message_count = info.get("message_count", 0)
+
+        return {
+            "storage_plugin": storage,
+            "duration_ns": duration_ns,
+            "message_count": message_count,
+        }
+    except Exception:
+        return {}
 
 
 class BagReader:
@@ -16,7 +49,7 @@ class BagReader:
         self.topics = config.topics
         self.version = self._detect_version()
         self._validate()
-        print(f"[BagReader] Detected ROSbag {'v3 (ROS2)' if self.version == 3 else 'v2 (ROS1)'}")
+        self._print_info()
 
     def _detect_version(self) -> int:
         if _is_v3(self.path):
@@ -33,6 +66,40 @@ class BagReader:
             raise FileNotFoundError(f"Bag not found: {self.path}")
         if self.version == 2 and self.path.suffix not in (".bag",):
             raise ValueError(f"Not a .bag file: {self.path}")
+        if self.version == 3:
+            meta_path = self.path / "metadata.yaml"
+            if not meta_path.exists():
+                raise FileNotFoundError(
+                    f"Directory '{self.path}' looks like a ROS 2 bag but is missing "
+                    f"metadata.yaml. Ensure this is a valid rosbag2 directory."
+                )
+            try:
+                import yaml
+                with open(meta_path, "r") as f:
+                    raw = yaml.safe_load(f)
+                if not raw or "rosbag2_bagfile_information" not in raw:
+                    raise ValueError(
+                        f"metadata.yaml in '{self.path}' does not contain "
+                        f"'rosbag2_bagfile_information'. Is this a valid ROS 2 bag?"
+                    )
+            except ImportError:
+                pass  # yaml not available, skip deep validation
+
+    def _print_info(self):
+        if self.version == 3:
+            meta = _read_v3_metadata(self.path)
+            storage = meta.get("storage_plugin", "unknown")
+            duration_ns = meta.get("duration_ns", 0)
+            message_count = meta.get("message_count", 0)
+            duration_s = duration_ns / 1e9 if duration_ns else 0
+            print(f"[BagReader] Detected ROSbag v3 (ROS2)")
+            print(f"[BagReader]   storage : {storage}")
+            if duration_s > 0:
+                print(f"[BagReader]   duration: {duration_s:.2f}s")
+            if message_count > 0:
+                print(f"[BagReader]   messages: {message_count}")
+        else:
+            print(f"[BagReader] Detected ROSbag v2 (ROS1)")
 
     def _get_typestore(self):
         from rosbags.typesys import Stores, get_typestore

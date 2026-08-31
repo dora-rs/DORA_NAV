@@ -1,0 +1,63 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ourrosbag — SLAM pipeline example
+#
+# Replays a rosbag and feeds image + IMU + odometry into a visual-inertial
+# SLAM pipeline that outputs a map.
+#
+# Usage:
+#   dora start examples/slam_pipeline.yml
+# ──────────────────────────────────────────────────────────────────────────────
+
+nodes:
+  # ── Source: rosbag replay ──────────────────────────────────────────────────
+  - id: rosbag_player
+    path: main.py
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - image
+      - imu
+      - odometry
+      - pointcloud
+
+  # ── Feature extraction from camera frames ──────────────────────────────────
+  - id: feature_extractor
+    operator:
+      python: operators/feature_extractor.py
+      inputs:
+        image: rosbag_player/image
+      outputs:
+        - features        # keypoints + descriptors per frame
+
+  # ── Visual-Inertial SLAM node ──────────────────────────────────────────────
+  - id: slam
+    operator:
+      python: operators/slam_node.py
+      inputs:
+        features: feature_extractor/features
+        imu: rosbag_player/imu
+        odometry: rosbag_player/odometry
+        pointcloud: rosbag_player/pointcloud
+      outputs:
+        - pose            # optimised camera pose
+        - map_points      # sparse 3D map points
+
+  # ── Map publisher / visualiser ─────────────────────────────────────────────
+  - id: map_publisher
+    operator:
+      python: operators/map_publisher.py
+      inputs:
+        pose: slam/pose
+        map_points: slam/map_points
+      outputs:
+        - occupancy_grid  # 2D grid map for downstream planners
+
+  # ── Loop closure detector ──────────────────────────────────────────────────
+  - id: loop_closure
+    operator:
+      python: operators/loop_closure.py
+      inputs:
+        features: feature_extractor/features
+        pose: slam/pose
+      outputs:
+        - correction      # pose-graph correction signal

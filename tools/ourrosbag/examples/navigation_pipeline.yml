@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ourrosbag — Navigation pipeline example
+#
+# Replays a rosbag and feeds image + IMU + odometry into a basic
+# obstacle-detection → path-planning → control pipeline.
+#
+# Usage:
+#   dora start examples/navigation_pipeline.yml
+# ──────────────────────────────────────────────────────────────────────────────
+
+nodes:
+  # ── Source: rosbag replay ──────────────────────────────────────────────────
+  - id: rosbag_player
+    path: main.py
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - image
+      - imu
+      - odometry
+      - pointcloud
+
+  # ── Perception: obstacle detection from camera ─────────────────────────────
+  - id: obstacle_detector
+    operator:
+      python: operators/obstacle_detector.py
+      inputs:
+        image: rosbag_player/image
+        pointcloud: rosbag_player/pointcloud
+      outputs:
+        - obstacles       # bounding boxes or point clusters
+
+  # ── Localisation: fuse IMU + odometry ──────────────────────────────────────
+  - id: localiser
+    operator:
+      python: operators/localiser.py
+      inputs:
+        imu: rosbag_player/imu
+        odometry: rosbag_player/odometry
+      outputs:
+        - pose            # current estimated pose (x, y, yaw)
+
+  # ── Planning: compute waypoints ────────────────────────────────────────────
+  - id: path_planner
+    operator:
+      python: operators/path_planner.py
+      inputs:
+        pose: localiser/pose
+        obstacles: obstacle_detector/obstacles
+      outputs:
+        - waypoints       # list of (x, y) waypoints
+
+  # ── Control: drive to next waypoint ────────────────────────────────────────
+  - id: controller
+    operator:
+      python: operators/controller.py
+      inputs:
+        pose: localiser/pose
+        waypoints: path_planner/waypoints
+      outputs:
+        - cmd_vel         # (linear_vel, angular_vel)

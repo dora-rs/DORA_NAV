@@ -52,9 +52,9 @@ def to_arrow(parsed: dict):
         if isinstance(x, np.ndarray):
             return pa.record_batch({
                 "timestamp": pa.array([ts], type=pa.int64()),
-                "x":         pa.array(x.tobytes(), type=pa.large_binary()),
-                "y":         pa.array(y.tobytes(), type=pa.large_binary()),
-                "z":         pa.array(z.tobytes(), type=pa.large_binary()),
+                "x":         pa.array([x.tobytes()], type=pa.large_binary()),
+                "y":         pa.array([y.tobytes()], type=pa.large_binary()),
+                "z":         pa.array([z.tobytes()], type=pa.large_binary()),
                 "n_points":  pa.array([data["n_points"]], type=pa.int32()),
             })
 
