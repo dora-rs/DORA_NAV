@@ -1,0 +1,13 @@
+bag_path: "data/race_1.bag"
+topics:
+  - /camera/fisheye2/image_raw
+  - /camera/odom/sample
+  - /camera/imu
+playback:
+  speed: 10.0
+  loop: false
+  start_time: 0.0
+  end_time: null
+output:
+  format: arrow
+  prefix: rosbag

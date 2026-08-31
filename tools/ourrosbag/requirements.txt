@@ -1,0 +1,8 @@
+rosbags>=0.9
+dora-rs>=0.4
+numpy>=1.24
+pyyaml>=6.0
+pybind11>=2.11
+pyarrow>=14.0
+pandas
+matplotlib

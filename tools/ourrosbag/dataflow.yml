@@ -1,0 +1,11 @@
+nodes:
+  - id: rosbag_player
+    path: main.py
+    inputs:
+      tick: dora/timer/millis/100
+    outputs:
+      - image
+      - imu
+      - gps
+      - odometry
+      - pointcloud
