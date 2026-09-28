@@ -146,3 +146,12 @@ master/dev分支不包含和机械臂协同的部分，删除pure_pursuit发布�
 补充细节。
 #### docs: 新增310P对应INSTALL文档
 310P+OpenEuler
+
+#### feat: 适配 dora 1.0.0
+整体中间件由 dora v0.5.0 升级到 v1.0.0（仓库内置正式版源码 `dora-1.0.0/`）。主要动作：
+- C 节点 API（`node_api.h` / `libdora_node_api_c.a`）**签名不变**，节点 C/C++ 源码无需改 dora 调用；只需用 1.0 的静态库重编译所有节点。
+- 三个 INSTALL 文档的 dora 安装步骤更新为 v1.0.0：`rustup update stable`（Rust>=1.95）、命令行用 `pip install -U dora-rs-cli`（需 Python3.11+）或 `cargo install dora-cli --locked`、编译 `apis/c/node` 并拷贝 `libdora_node_api_c.a` 与 `node_api.h` 到 `third_party/dora`。
+- dataflow yml 结构（`nodes:[{id,path,inputs,outputs}]`）与 `dora run`/timer（`dora/timer/millis|hz`）在 1.0 保持不变；节点进程的工作目录仍默认为数据流 yml 所在目录，现有相对路径配置（`../modules/...` 等）无需改动。
+- 说明：如需 `dora stop/logs/list` 管理，改用 `dora up` + `dora start --detach` + `dora stop` + `dora down`；`dora run` 为本机隔离运行。
+
+- 完善README

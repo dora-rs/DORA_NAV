@@ -9,13 +9,17 @@ sudo dnf install mesa-libGLU-devel freeglut-devel -y  #安装GLU开发库
 ```
 ### Dora安装
 ```shell
-pip install dora-rs-cli #安装dora命令行
-wget https://github.com/dora-rs/dora/archive/refs/tags/v0.5.0.zip	#下载0.5.0版本的dora源码
-cd dora/apis/c/node
+# 1. 安装 dora 命令行（1.0 的 dora-rs-cli 需要 Python 3.11+；OpenEuler 默认 python 过低就改用 cargo）
+pip install -U dora-rs-cli            # 或：cargo install dora-cli --locked
+rustup update stable                  # dora 1.0 需要 Rust >= 1.95
+# 2. 编译 dora C 节点链接库
+wget https://github.com/dora-rs/dora/archive/refs/tags/v1.0.0.zip #下载1.0.0版本的dora源码
+cd dora-1.0.0/apis/c/node
 cargo build --release   #编译
 ```
-编译完成后可以在dora/target/release下看到libdora_node_api_c.a的链接库，说明编译成功。
-然后在`NavigationFramework/third_party/`下新建`dora/lib`和`dora/include`，将`dora-0.5.0/target/release`下的`libdora_node_api_c.a`放到`lib`文件夹中，将`dora-0.5.0/apis/c/node`下的`node_api.h`放到`include`文件夹中。
+编译完成后可以在dora-1.0.0/target/release下看到libdora_node_api_c.a的链接库，说明编译成功。
+若仓库已内置 `dora-1.0.0/` 源码目录，直接进入该目录执行上面的编译即可。
+然后在`third_party/`下新建`dora/lib`和`dora/include`，将`dora-1.0.0/target/release`下的`libdora_node_api_c.a`放到`lib`文件夹中，将`dora-1.0.0/apis/c/node`下的`node_api.h`放到`include`文件夹中。
 
 ### 第三方库
 ```shell
@@ -93,6 +97,13 @@ mkdir build && cd build
 cmake .. && make -j${nproc}
 cd ..
 dora run apps/xxx.yml #根据所需要的yml配置文件来选择
+# dora run 会在本机隔离运行数据流（无需先 dora up，但没有 dora stop / dora logs 管理）。
+# 如需管理（list/stop/logs），改用协调模式：
+#   dora up
+#   dora start apps/xxx.yml --detach     # 后台运行
+#   dora logs apps/xxx.yml --node <名字>  # 查看某节点日志
+#   dora stop <名字或uuid>
+#   dora down
 ```
 ## 部分编译问题解决方法
 
@@ -105,7 +116,7 @@ openEuler 22.03 SP3系统仓库不提供这个包，最简单的解决方法：
 打开`modules/mapping/lightning_lm_mapping/CMakeLists.txt`进行以下修改：
 ```shell
 find_package(GLOG REQUIRED)替换为
-				↓
+        ↓
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLOG REQUIRED libglog)
 ########################################
