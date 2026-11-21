@@ -7,8 +7,14 @@ find_library(LIVOX_SDK_LIBRARY
     PATHS /usr/local/lib /usr/lib
     REQUIRED
 )
+find_path(LIVOX_SDK_INCLUDE_DIR
+    NAMES livox_lidar_api.h
+    PATHS /usr/local/include /usr/include
+    REQUIRED
+)
 
 include_directories(
+    ${LIVOX_SDK_INCLUDE_DIR}
     src
     src/include
     3rdparty
