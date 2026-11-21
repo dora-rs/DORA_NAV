@@ -8,7 +8,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: Debug/Release/RelWithDebI
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 # ── dora SDK（唯一入口，所有子模块直接使用这两个变量）────────
-set(DORA_ROOT ${CMAKE_SOURCE_DIR}/third_party/dora)
+set(DORA_ROOT ${CMAKE_SOURCE_DIR}/third_party/dora CACHE PATH
+    "dora C node API (lib/libdora_node_api_c.a + include/node_api.h); override with -DDORA_ROOT=<dir>")
 set(DORA_INCLUDE_DIR ${DORA_ROOT}/include)
 set(DORA_NODE_API_LIB ${DORA_ROOT}/lib/libdora_node_api_c.a)
 

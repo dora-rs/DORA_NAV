@@ -54,7 +54,7 @@ add_library(hdl_graph_slam_core STATIC ${HDL_CORE_SOURCES})
 
 target_link_libraries(hdl_graph_slam_core
     ${PCL_LIBRARIES}
-    ${g2o_LIBRARIES}
+    ${G2O_LIBRARIES}
     ndt_omp_static
     fast_gicp_static
     OpenMP::OpenMP_CXX
